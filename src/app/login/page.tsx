@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ShieldCheck,
   Eye,
@@ -19,11 +19,57 @@ import {
 } from "lucide-react";
 import { createClient, DEMO_MODE } from "@/lib/supabase/client";
 
+/* ------------------------------------------------------------------ */
+/* Notification banners — isolated in their own component so they can */
+/* use useSearchParams() inside a Suspense boundary without blocking  */
+/* the full page from prerendering.                                   */
+/* ------------------------------------------------------------------ */
+function LoginNotifications() {
+  const searchParams = useSearchParams();
+  const isLoggedOut = searchParams.get("logout") === "true";
+  const isUnauthorized = searchParams.get("unauthorized") === "true";
+
+  if (!isLoggedOut && !isUnauthorized) return null;
+
+  return (
+    <>
+      {/* Sign-out confirmation message */}
+      {isLoggedOut && (
+        <div
+          role="status"
+          className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5"
+        >
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold">Successfully Signed Out</span>
+            <p className="text-emerald-800">
+              Demo session cookies have been cleared. You are in public mode.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Unauthorized access notice */}
+      {isUnauthorized && (
+        <div
+          role="alert"
+          className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5"
+        >
+          <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <span className="font-bold">Authentication Required</span>
+            <p className="text-amber-800">
+              Access to live agency contracts requires valid credentials, or click below for the isolated demo workspace.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function LoginPage() {
   const router = useRouter();
-
-  const [isLoggedOut, setIsLoggedOut] = useState(false);
-  const [isUnauthorized, setIsUnauthorized] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,19 +78,6 @@ export default function LoginPage() {
   const [demoLoading, setDemoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-
-  // Read URL query parameters on mount to avoid blocking SSG prerendering
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("logout") === "true") {
-        setIsLoggedOut(true);
-      }
-      if (params.get("unauthorized") === "true") {
-        setIsUnauthorized(true);
-      }
-    }
-  }, []);
 
   const handleDemoBypass = () => {
     setDemoLoading(true);
@@ -163,37 +196,10 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xs">
-          {/* Sign-out confirmation message */}
-          {isLoggedOut && (
-            <div
-              role="status"
-              className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5"
-            >
-              <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="font-bold">Successfully Signed Out</span>
-                <p className="text-emerald-800">
-                  Demo session cookies have been cleared. You are in public mode.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Unauthorized access notice */}
-          {isUnauthorized && (
-            <div
-              role="alert"
-              className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5"
-            >
-              <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <div className="space-y-0.5">
-                <span className="font-bold">Authentication Required</span>
-                <p className="text-amber-800">
-                  Access to live agency contracts requires valid credentials, or click below for the isolated demo workspace.
-                </p>
-              </div>
-            </div>
-          )}
+          {/* Notification banners — Suspense boundary for useSearchParams */}
+          <Suspense fallback={null}>
+            <LoginNotifications />
+          </Suspense>
 
           {/* Quick Demo Workspace Access */}
           <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 mb-6">
