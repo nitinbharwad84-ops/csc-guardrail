@@ -1,6 +1,6 @@
-# DESIGN.md — CSC Visual & UI Design System ("Ledger Slate & Trust Indigo")
+# CSC Visual & UI Design System ("Ledger Slate & Trust Indigo")
 
-> **Aesthetic Direction:** Light-first, high-trust B2B FinTech & Contract SaaS (modeled after Stripe, Ramp, and Linear). Optimized for crisp readability on both laptops and bright hackathon projector screens.
+> **Aesthetic Direction:** Light-first, high-trust B2B FinTech & Contract SaaS (modeled after Stripe, Ramp, and Linear). Optimized for crisp readability on both high-DPI displays and bright hackathon projector screens.
 
 ---
 
@@ -24,10 +24,11 @@
 | `--status-warn` | `#D97706` | `amber-600` | SOW Ambiguity flags & Out-of-Scope drift warnings |
 | `--status-warn-bg` | `#FFFBEB` | `amber-50` | Ambiguity scanner & drift alert card backgrounds |
 | `--status-danger` | `#DC2626` | `red-600` | Budget cap breach / high-risk unresolved conflict |
+| `--status-danger-bg` | `#FEF2F2` | `red-50` | Breach alert backgrounds |
 
 ---
 
-## 2. Typography & Numeric Precision
+## 2. Typography & Mandatory Numeric Precision
 
 * **Display & Section Headings:** `Plus Jakarta Sans` (`600 SemiBold`, `700 Bold`, `800 ExtraBold`, tight tracking `-0.02em`)
 * **UI Copy, Forms & Table Text:** `Inter` (`400 Regular`, `500 Medium`, `600 SemiBold`)
@@ -59,9 +60,9 @@
    * **Client Approval Portal (`/approve/[token]`):** Centered `720px` single-column contract sheet with zero agency sidebar clutter.
 3. **Card & Border Standard:**
    * `border-radius: 12px` (`rounded-xl`) on all cards and containers; `8px` (`rounded-lg`) on buttons and inputs; `9999px` (`rounded-full`) on status pills.
-   * Rely on crisp `1px solid #E2E8F0` borders rather than heavy drop shadows (`shadow-xs` maximum).
+   * Rely on crisp `1px solid #E2E8F0` borders rather than heavy drop shadows (`shadow-xs` or `shadow-sm` maximum). Never use dark or colored glow shadows.
 4. **Status Pill Grammar:**
-   * `Locked` $\rightarrow$ Slate pill (`bg-slate-100 text-slate-700`)
-   * `Swappable (14 hrs)` $\rightarrow$ Emerald pill (`bg-emerald-50 text-emerald-700 border-emerald-200`)
-   * `Ambiguous Spec` / `Drift +14 hrs` $\rightarrow$ Amber pill (`bg-amber-50 text-amber-700 border-amber-200`)
-   * `Over Cap` $\rightarrow$ Red pill (`bg-red-50 text-red-700 border-red-200`)
+   * `Locked` → Slate pill (`bg-slate-100 text-slate-700`)
+   * `Swappable (14 hrs)` → Emerald pill (`bg-emerald-50 text-emerald-700 border-emerald-200`)
+   * `Ambiguous Spec` / `Drift +14 hrs` → Amber pill (`bg-amber-50 text-amber-700 border-amber-200`)
+   * `Over Cap` / `Breach` → Red pill (`bg-red-50 text-red-700 border-red-200`)

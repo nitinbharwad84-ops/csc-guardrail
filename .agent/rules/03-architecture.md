@@ -4,9 +4,11 @@
 
 ```text
 csc-guardrail/
-├── AGENTS.md                  # AI coding agent instructions
+├── AGENTS.md                  # AI coding agent instructions (Synchronized Master)
 ├── DESIGN.md                  # Ledger Slate & Trust Indigo tokens
 ├── ARCHITECTURE.md            # DB schema, API specs & folder map
+├── CLAUDE.md                  # Claude Code instructions (Synchronized Master)
+├── docs/team-workflow/        # Multi-track team workflow & boundary locks
 ├── src/
 │   ├── app/
 │   │   ├── page.tsx                   # Screen 1: Landing Page & Screen Directory
@@ -14,20 +16,53 @@ csc-guardrail/
 │   │   ├── scanner/page.tsx           # Screen 3: Pre-Kickoff SOW Ambiguity Scanner
 │   │   ├── dashboard/page.tsx         # Screen 4: Scope Health Dashboard
 │   │   ├── simulator/page.tsx         # Screen 5: Live Drift & Swap Simulator
-│   │   ├── approve/[token]/page.tsx   # Screen 6: Public Client Approval Portal
+│   │   ├── approve/[token]/page.tsx   # Screen 6: Public Client Approval Portal (async params)
 │   │   ├── ledger/page.tsx            # Screen 7: Immutable Audit Ledger + PDF
 │   │   └── api/
 │   │       ├── scan-sow/route.ts      # POST: Detects half-complete SOW specs
 │   │       └── parse-scope/route.ts   # POST: Splits client message vs SOW baseline
 │   ├── components/
-│   │   ├── AppSidebar.tsx             # Shared 240px workspace sidebar
-│   │   ├── KpiBentoGrid.tsx           # 4 top dashboard cards
-│   │   └── PdfExportButton.tsx        # Client-side SOW + Ledger PDF generator
-│   └── lib/
-│       ├── supabase.ts                # Typed Supabase client
-│       ├── swap-engine.ts             # Deterministic rupee/hour swap math
-│       └── demo-fallback.ts           # Stage-safe static JSON & VastraKart seed
+│   │   ├── shared/
+│   │   │   ├── AppSidebar.tsx         # Shared 240px workspace sidebar
+│   │   │   └── KpiBentoGrid.tsx       # 4 top dashboard cards
+│   │   ├── landing/                   # Hero & feature comparison components
+│   │   ├── dashboard/                 # Scope table, budget gauge & KPI cards
+│   │   ├── portal/                    # Approval contract sheet & confirmation
+│   │   ├── ledger/                    # Ledger table & PdfExportButton.tsx
+│   │   ├── scanner/                   # SOW input textarea & ambiguity cards
+│   │   └── simulator/                 # Message input, drift detector & swap panel
+│   ├── lib/
+│   │   ├── supabase/
+│   │   │   ├── client.ts              # Typed browser Supabase client
+│   │   │   └── server.ts              # Typed server Supabase client
+│   │   ├── engine/
+│   │   │   └── swap-math.ts           # Deterministic rupee/hour swap math
+│   │   └── fallbacks/
+│   │       ├── scan-sow-fallback.json # SOW scanner offline fallback JSON
+│   │       ├── parse-scope-fallback.json # Drift detector offline fallback JSON
+│   │       └── vastrakart-demo.ts     # Offline typed VastraKart seed mirror
+│   └── types/
+│       └── csc.ts                     # Canonical domain interfaces
+└── supabase/
+    ├── schema.sql                     # Canonical DB schema + RLS policies
+    └── seed.sql                       # Idempotent demo seed data
 ```
+
+### Next.js 15 App Router Conventions
+1. **Dynamic Route Params are Promises:**
+   In Next.js 15, route parameters are asynchronous. Dynamic pages such as `src/app/approve/[token]/page.tsx` must await params:
+   ```typescript
+   export default async function ApprovePortalPage({
+     params,
+   }: {
+     params: Promise<{ token: string }>;
+   }) {
+     const { token } = await params;
+     // Fetch change request by token...
+   }
+   ```
+2. **Server Components by Default:**
+   Keep all page components server-rendered by default for optimal performance and SEO. Add `'use client'` strictly to interactive leaves (e.g. form inputs, buttons, sliders, modals).
 
 ---
 
@@ -104,8 +139,8 @@ create table audit_ledger (
 ## 3. AI API Contracts (With Mandatory Offline Fallbacks)
 
 ### A. `POST /api/scan-sow` (Pre-Kickoff SOW Ambiguity Scanner)
-* **Input:** `{ "sowText": string }`
-* **Output JSON:**
+* **Zod Input Schema:** `{ sowText: z.string().min(10) }`
+* **Output JSON Contract:**
 ```json
 {
   "ambiguities": [
@@ -126,8 +161,8 @@ create table audit_ledger (
 ```
 
 ### B. `POST /api/parse-scope` (Mid-Sprint Client Drift Detector)
-* **Input:** `{ "clientMessage": string, "baselineItems": ScopeItem[], "hourlyRate": 1250 }`
-* **Output JSON:**
+* **Zod Input Schema:** `{ clientMessage: z.string().min(5), baselineItems: z.array(...), hourlyRate: z.number().default(1250) }`
+* **Output JSON Contract:**
 ```json
 {
   "in_scope": [

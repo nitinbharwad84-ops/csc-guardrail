@@ -1,175 +1,166 @@
 # Git Branching, Sync Rules & PR Workflow
 
-> **This project uses a linear `main`-based workflow.** No develop branch. Each member works in their own feature branch and PRs directly to `main`. Only Member 1 (Lead Integrator) merges.
+> **This project uses a linear, branch-isolated `main`-based workflow.**  
+> Direct commits or pushes to `main` or `master` are strictly forbidden for both AI agents and human developers. Each member works exclusively in their own dedicated feature branch and PRs directly to `main`. Only Member 1 (Lead Integrator) merges.
 
 ---
 
-## 🌿 Branch Naming Convention
+## 🏛️ LAW 1 — MANDATORY BRANCH CHECKOUT (NEVER TOUCH `main` OR `master`)
 
-| Member | Branch Name | Scope |
-|:-------|:-----------|:------|
-| Member 1 | `feat/shared-shell` | Types, Supabase clients, engine, shared components, root layout |
-| Member 2 | `feat/landing-dashboard` | Landing page, login, dashboard |
-| Member 3 | `feat/portal-ledger` | Approval portal, audit ledger, PDF export |
-| Member 4 | `feat/scanner-simulator` | SOW scanner, drift simulator, API routes, fallbacks |
-| Member 5 | `feat/demo-fixtures` | Seed SQL, TypeScript fixtures, demo script |
+1. **Mandatory Check at Session Start:**  
+   Before creating, editing, reading with intent to write, or deleting ANY file, every agent **MUST** run:
+   ```bash
+   git branch --show-current
+   ```
+2. **Immediate Halt on Main/Master:**  
+   If the active branch is `main` or `master`:
+   - **STOP IMMEDIATELY.** Do not modify, create, or delete any files.
+   - Run `git checkout -b feat/<track-or-feature-name>` (or request the developer to confirm their track branch).
+   - Only proceed with file edits once confirmed to be on an isolated `feat/*` branch.
+3. **Strictly Forbidden Agent Git Operations:**
+   - ❌ `git commit` on `main` or `master`
+   - ❌ `git push` on `main` or `master`
+   - ❌ `git merge` on `main` or `master`
+   - ❌ `git reset --hard` on `main` or `master`
+   - ❌ Auto-committing or auto-pushing without explicit developer instruction on a feature branch (`feat/*`).
 
-### Branch Creation (run once per member)
+---
+
+## 🌿 Dedicated Feature Branch Names
+
+| Member / Track | Branch Name | Scope & Owned Directories |
+|:---|:---|:---|
+| **Track 01 (Lead Integrator)** | `feat/shared-shell` | Types, Supabase clients, engine, shared components, root layout, schema.sql |
+| **Track 02 (Landing, Auth & Dashboard)** | `feat/landing-dashboard` | Landing page, login, dashboard, landing & dashboard components |
+| **Track 03 (Portal, Ledger & PDF)** | `feat/portal-ledger` | Approval portal, audit ledger, PDF export, portal & ledger components |
+| **Track 04 (Scanner, Simulator & AI)** | `feat/scanner-simulator` | SOW scanner, drift simulator, API routes, fallbacks |
+| **Track 05 (Demo Seed & QA)** | `feat/demo-fixtures` | Seed SQL, TypeScript fixtures, demo script, QA testing |
+
+### Initial Branch Creation (Run Once per Member)
 
 ```bash
 git checkout main
 git pull origin main
 git checkout -b feat/<your-branch-name>
-# e.g.:  git checkout -b feat/landing-dashboard
+# Example: git checkout -b feat/landing-dashboard
 ```
 
 ---
 
-## ✅ Pre-PR Verification Checklist
+## ✅ LAW 5 — Pre-PR Verification Checklist
 
-**All three checks must pass before opening a PR. No exceptions.**
+**All checks must pass before opening a PR. No exceptions.**
 
 ```bash
-# 1. TypeScript — zero errors required (most important)
+# 1. Static TypeScript Check — MUST EXIT WITH 0 ERRORS
 npx tsc --noEmit
 
-# 2. ESLint — no blocking errors
+# 2. ESLint Check — No blocking errors
 npx eslint src --ext .ts,.tsx --max-warnings 0
 
-# 3. Next.js build smoke check — catches import and routing errors
+# 3. Next.js Build Smoke Check — Catches import and routing errors
 npx next build
 ```
 
 > [!IMPORTANT]
-> If `npx tsc --noEmit` fails with an error in a **🔒 shared-core file**, do not attempt to fix it yourself. Follow the [shared-core change request protocol](folder-ownership-locks.md#request-protocol-for-shared-core-changes) and wait for Member 1 to resolve it.
+> If `npx tsc --noEmit` fails due to a missing or altered type in a **🔒 shared-core file**, do NOT edit `src/types/csc.ts` directly. Follow the [Shared-Core Change Request Protocol](folder-ownership-locks.md#request-protocol-for-shared-core-changes) and coordinate with Member 1.
 
 ---
 
 ## 📬 Pull Request Rules
 
-### Format
+### Format & Submission
 
 | Field | Rule |
-|:------|:-----|
-| **Target branch** | Always `main` — never target a teammate's feature branch |
-| **PR title** | `feat(m[1-5]): <short imperative description>` |
-| **Example titles** | `feat(m2): landing page, demo login, and dashboard` |
-| | `feat(m3): client approval portal and audit ledger PDF` |
-| | `feat(m4): SOW scanner, simulator, and AI API routes` |
-| | `feat(m5): VastraKart seed SQL and demo fixtures` |
-| **Reviewer** | Always request **Member 1** (Lead Integrator) |
-| **Merge** | Only Member 1 merges PRs into `main` |
+|:---|:---|
+| **Target branch** | Always `main` — never target another teammate's feature branch |
+| **PR title format** | `feat(m[1-5]): <short imperative description>` |
+| **Example titles** | `feat(m2): landing page, demo login bypass, and dashboard KPIs` |
+| | `feat(m3): client approval portal and audit ledger PDF generator` |
+| | `feat(m4): SOW ambiguity scanner, drift simulator, and fallback APIs` |
+| | `feat(m5): VastraKart idempotent seed SQL and demo script` |
+| **Reviewer** | Always assign **Member 1** (Lead Integrator) |
+| **Merge Authority** | Only Member 1 merges PRs into `main` |
 
 ### Required PR Description Template
 
 ```markdown
 ## Summary
-<!-- One sentence: what does this PR add or fix? -->
+<!-- One clear sentence explaining the changes -->
 
-## Screens / Routes
-<!-- List the routes this PR affects -->
+## Affected Routes & Screens
 - `/dashboard` — Scope Health Dashboard
 - `/login` — Demo bypass login
 
-## Files Changed
-<!-- Must stay within your folder lock (see folder-ownership-locks.md) -->
+## Modified Files
+<!-- Must be strictly within your track folder lock -->
 - src/app/dashboard/page.tsx
 - src/components/dashboard/KpiCards.tsx
 
-## TypeScript Check
-<!-- Paste the last line of `npx tsc --noEmit` output -->
-✅ `npx tsc --noEmit` — exited 0, zero errors
-
-## Screenshot / Proof
-<!-- Puppeteer screenshot, screen grab, or terminal output -->
-[attach screenshot]
+## Verification Proof
+- `npx tsc --noEmit` exited 0 (zero errors)
+- [Attach screenshot or visual proof]
 
 ## Checklist
-- [ ] All changes are within my folder lock
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] No hardcoded secrets in any file
-- [ ] No changes to package.json without Lead approval
-- [ ] VastraKart demo numbers unchanged (₹1,50,000 / 120 hrs / +14 hr drift)
+- [ ] Active branch is `feat/*` (never committed to `main`)
+- [ ] All changes are within my assigned track ownership boundary
+- [ ] TypeScript static check passes (`npx tsc --noEmit`)
+- [ ] No hardcoded secrets or environment variables committed
+- [ ] VastraKart canonical numbers maintained (₹1,50,000 / 120 hrs / +14 hr drift)
 ```
 
 ---
 
 ## 🔄 Staying in Sync with `main`
 
-Whenever Member 1 merges a shared-core change (or any teammate's PR), **all other members must sync before continuing work:**
+Whenever Member 1 merges a shared-core update or another teammate's PR into `main`, rebase your feature branch before continuing:
 
 ```bash
-# Rebase your branch on the latest main
+# Fetch latest remote commits
 git fetch origin
-git rebase origin/main
 
-# If you hit conflicts:
-# 1. Open the conflicted file
-# 2. If it's in a 🔒 locked file — STOP. Contact Member 1.
-# 3. If it's in YOUR folder — resolve it, then:
-git add <resolved-file>
-git rebase --continue
+# Rebase active feature branch onto origin/main
+git rebase origin/main
 ```
 
-> [!WARNING]
-> **Never force-push `main`.** If you accidentally pushed to `main`, contact Member 1 immediately.
+### Conflict Resolution Strategy
 
----
-
-## ⚠️ Conflict Resolution Rules
-
-| Conflict Type | Rule |
+| Conflict Location | Resolution Procedure |
 |:---|:---|
-| Conflict in **your own folder** | Resolve it yourself. Keep your changes; rebase on main. |
-| Conflict in a **🔒 shared-core file** | STOP. Contact Member 1. Never resolve this yourself. |
-| Conflict in a **teammate's folder** | STOP. Contact that teammate. Never merge their changes. |
-| Conflict in `package-lock.json` | Accept `main`'s version (`git checkout origin/main -- package-lock.json`). Then report the conflict to Member 1. |
+| **Inside your track's owned files** | Resolve manually. Keep your functional changes, verify `npx tsc --noEmit`, then `git rebase --continue`. |
+| **Inside 🔒 shared-core files** | **STOP IMMEDIATELY.** Contact Member 1. Never resolve shared core conflicts unilaterally. |
+| **Inside another teammate's files** | **STOP IMMEDIATELY.** You should not have modified files outside your track. Revert changes to those files. |
+| **Inside `package-lock.json`** | Accept origin/main version: `git checkout origin/main -- package-lock.json`, then notify Member 1. |
 
 ---
 
 ## 🚨 Demo Day Emergency Protocol
 
-If a teammate's feature is broken and their branch isn't mergeable on demo day:
-
-```bash
-# Member 1 applies a targeted patch from the working commit:
-git checkout main
-git cherry-pick <specific-working-commit-hash>
-
-# Verify before proceeding:
-npx tsc --noEmit
-npx next build
-
-# Never cherry-pick an entire branch tip if it has broken commits.
-```
-
-If the broken feature belongs to Member 4 (AI APIs), Member 5's fallbacks guarantee the demo still works:
-- `/api/scan-sow` → serves `src/lib/fallbacks/scan-sow-fallback.json`
-- `/api/parse-scope` → serves `src/lib/fallbacks/parse-scope-fallback.json`
-- All pages → consume `src/lib/fallbacks/vastrakart-demo.ts` constants
+If a teammate's feature is blocked or incomplete on demo day:
+1. Member 1 creates a safe hotfix commit directly on `feat/shared-shell` or cherry-picks the working commit:
+   ```bash
+   git checkout main
+   git cherry-pick <working-commit-hash>
+   npx tsc --noEmit
+   ```
+2. If remote AI APIs or Supabase are unreachable during live presentation, all screens fall back smoothly to `src/lib/fallbacks/` static JSON and `vastrakart-demo.ts`. Zero live crashes.
 
 ---
 
-## 🤖 Git Rules for AI Agents
+## 📋 Copy-Paste Commands for Developer Hand-off
 
+When an AI agent finishes code changes on a feature branch, it must output these exact commands for the developer to run manually:
+
+```bash
+# 1. Review status and modified files
+git status
+
+# 2. Stage modified files within your track boundary
+git add <modified-files>
+
+# 3. Commit with conventional commit message
+git commit -m "feat(<track>): <description>"
+
+# 4. Push to remote feature branch
+git push -u origin feat/<your-branch-name>
 ```
-FORBIDDEN — AI agents must never run:
-  git add
-  git commit
-  git commit --amend
-  git push
-  git push --force
-  git merge
-  git reset --hard
-
-ALLOWED — AI agents may run:
-  git status
-  git diff
-  git log --oneline -10
-  git branch --show-current
-  git fetch origin          (read-only)
-  npx tsc --noEmit          (verification)
-  npx next build            (verification, read-only build)
-```
-
-Humans own all commits and pushes. If you need to verify what will be committed, use `git diff` and show it to the human.

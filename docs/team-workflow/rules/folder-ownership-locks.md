@@ -1,172 +1,108 @@
 # Folder Ownership Locks & Anti-Conflict Rules
 
-> **Applies to:** All team members and all AI agents (Antigravity, Claude Code, Codex, Cursor, Copilot)  
-> **Enforcement:** These rules are binding. No agent or human may bypass them.
+> **Applies to:** All team members and all AI agents (Antigravity IDE, Claude Code, Codex, Cursor, Copilot).  
+> **Enforcement Level:** **Zero Tolerance.** These rules are mathematically binding. No agent or human may bypass them.
 
 ---
 
-## 🔒 Shared / Protected Core — Member 1 (Lead Integrator) Only
+## 🔒 Shared / Protected Core — Track 01 (Lead Integrator) Only
 
-The files below are **read-only** for everyone except Member 1's agent. You may **import** from them freely but must **never write, overwrite, rename, or extend** them without following the Request Protocol below.
+The files below constitute the structural backbone of the project and are **read-only** for all team members except Member 1. Other teammates may **import** from them freely but must **never write, overwrite, rename, or alter** them directly.
 
-| File / Folder | Why Locked | Safe Usage |
+| File / Folder | Structural Role | Safe Usage for Teammates |
 |:---|:---|:---|
-| `src/types/csc.ts` | Single source of truth for all domain types | `import type { Project, ScopeItem, ... } from '@/types/csc'` |
-| `src/lib/supabase/client.ts` | Typed browser Supabase client config | `import { createBrowserClient } from '@/lib/supabase/client'` |
-| `src/lib/supabase/server.ts` | Typed server Supabase client config | `import { createServerClient } from '@/lib/supabase/server'` |
-| `src/lib/engine/swap-math.ts` | Deterministic rupee/hour swap math | `import { calculateScopeSwap } from '@/lib/engine/swap-math'` |
-| `src/components/shared/AppSidebar.tsx` | Shared 240px workspace sidebar | Use `<AppSidebar />` as-is; never edit props or markup |
-| `src/components/shared/KpiBentoGrid.tsx` | Shared 4-card KPI bento layout | Use `<KpiBentoGrid />` as-is |
-| `src/app/layout.tsx` | Root layout (fonts, providers, metadata) | Rely on its presence; do not add scripts, providers, or meta |
-| `src/app/globals.css` | All CSS design tokens & Tailwind base layer | Use defined variables; never add global rules or override tokens |
-| `supabase/schema.sql` | Canonical DB schema + RLS policies | Read for reference; never ALTER, DROP, or ADD tables/columns |
-| `package.json` | Dependency manifest & scripts | Never run `pnpm add` / `npm install` and commit changes without Lead approval |
-| `.env.example` | Environment variable template | Copy to `.env.local` and fill values; never add or remove declared keys |
+| `src/types/csc.ts` | Canonical TypeScript interfaces for all domain models | `import type { Project, ScopeItem, ... } from '@/types/csc'` |
+| `src/lib/supabase/client.ts` | Typed browser Supabase client | `import { createBrowserClient } from '@/lib/supabase/client'` |
+| `src/lib/supabase/server.ts` | Typed server Supabase client | `import { createServerClient } from '@/lib/supabase/server'` |
+| `src/lib/engine/swap-math.ts` | Deterministic rupee/hour swap calculation | `import { calculateScopeSwap } from '@/lib/engine/swap-math'` |
+| `src/components/shared/AppSidebar.tsx` | Fixed 240px workspace sidebar with 5 navigation links | Use `<AppSidebar />` as-is; do not edit props or styles |
+| `src/components/shared/KpiBentoGrid.tsx` | Shared 4-card KPI grid layout | Use `<KpiBentoGrid />` as-is |
+| `src/app/layout.tsx` | Root layout (fonts, providers, metadata) | Rely on its presence; do not inject providers or meta |
+| `src/app/globals.css` | All CSS design tokens & Tailwind base layer | Use defined CSS variables; do not add global rules |
+| `supabase/schema.sql` | Canonical database schema + RLS policies | Reference for table design; do not execute ALTER or DROP |
+| `package.json` | Dependency manifest | Do not install packages without Track 01 Lead approval |
+| `.env.example` | Environment variable template | Copy to `.env.local`; do not add or remove declared keys |
 
 ---
 
-## 👤 Teammate File Boundaries
+## 👤 Track-by-Track Ownership Boundaries
 
-### Member 2 — Landing · Auth · Dashboard
+### Track 02 — Landing Page, Auth & Scope Health Dashboard
+* **Assigned Member:** Member 2
+* **Feature Branch:** `feat/landing-dashboard`
 
 | Status | Paths |
-|:-------|:------|
-| ✅ **ALLOW** | `src/app/page.tsx` |
-| ✅ **ALLOW** | `src/app/login/**` |
-| ✅ **ALLOW** | `src/app/dashboard/**` |
-| ✅ **ALLOW** | `src/components/landing/**` |
-| ✅ **ALLOW** | `src/components/dashboard/**` |
-| ❌ **FORBID** | All 🔒 Shared Core paths above |
-| ❌ **FORBID** | `src/app/approve/**` — Member 3 |
-| ❌ **FORBID** | `src/app/ledger/**` — Member 3 |
-| ❌ **FORBID** | `src/components/portal/**` — Member 3 |
-| ❌ **FORBID** | `src/components/ledger/**` — Member 3 |
-| ❌ **FORBID** | `src/app/scanner/**` — Member 4 |
-| ❌ **FORBID** | `src/app/simulator/**` — Member 4 |
-| ❌ **FORBID** | `src/app/api/**` — Member 4 |
-| ❌ **FORBID** | `src/components/scanner/**` — Member 4 |
-| ❌ **FORBID** | `src/components/simulator/**` — Member 4 |
-| ❌ **FORBID** | `src/lib/fallbacks/**` — Member 4 & 5 |
-| ❌ **FORBID** | `supabase/seed.sql` — Member 5 |
-| ❌ **FORBID** | `DEMO_SCRIPT.md` — Member 5 |
+|:---|:---|
+| ✅ **ALLOW (Full Write)** | `src/app/page.tsx`<br>`src/app/login/**`<br>`src/app/dashboard/**`<br>`src/components/landing/**`<br>`src/components/dashboard/**` |
+| ❌ **FORBID (Read-Only / No Access)** | All 🔒 Shared Core files<br>`src/app/approve/**` (Track 03)<br>`src/app/ledger/**` (Track 03)<br>`src/components/portal/**` (Track 03)<br>`src/components/ledger/**` (Track 03)<br>`src/app/scanner/**` (Track 04)<br>`src/app/simulator/**` (Track 04)<br>`src/app/api/**` (Track 04)<br>`src/components/scanner/**` (Track 04)<br>`src/components/simulator/**` (Track 04)<br>`src/lib/fallbacks/**` (Track 04 & 05)<br>`supabase/seed.sql` (Track 05)<br>`DEMO_SCRIPT.md` (Track 05) |
 
 ---
 
-### Member 3 — Portal · Ledger · PDF
+### Track 03 — Client Approval Portal, Audit Ledger & PDF Export
+* **Assigned Member:** Member 3
+* **Feature Branch:** `feat/portal-ledger`
 
 | Status | Paths |
-|:-------|:------|
-| ✅ **ALLOW** | `src/app/approve/[token]/**` |
-| ✅ **ALLOW** | `src/app/ledger/**` |
-| ✅ **ALLOW** | `src/components/portal/**` |
-| ✅ **ALLOW** | `src/components/ledger/**` |
-| ❌ **FORBID** | All 🔒 Shared Core paths above |
-| ❌ **FORBID** | `src/app/page.tsx` — Member 2 |
-| ❌ **FORBID** | `src/app/login/**` — Member 2 |
-| ❌ **FORBID** | `src/app/dashboard/**` — Member 2 |
-| ❌ **FORBID** | `src/components/landing/**` — Member 2 |
-| ❌ **FORBID** | `src/components/dashboard/**` — Member 2 |
-| ❌ **FORBID** | `src/app/scanner/**` — Member 4 |
-| ❌ **FORBID** | `src/app/simulator/**` — Member 4 |
-| ❌ **FORBID** | `src/app/api/**` — Member 4 |
-| ❌ **FORBID** | `src/lib/fallbacks/**` — Member 4 & 5 |
-| ❌ **FORBID** | `supabase/seed.sql` — Member 5 |
+|:---|:---|
+| ✅ **ALLOW (Full Write)** | `src/app/approve/[token]/**`<br>`src/app/ledger/**`<br>`src/components/portal/**`<br>`src/components/ledger/**` |
+| ❌ **FORBID (Read-Only / No Access)** | All 🔒 Shared Core files<br>`src/app/page.tsx` (Track 02)<br>`src/app/login/**` (Track 02)<br>`src/app/dashboard/**` (Track 02)<br>`src/components/landing/**` (Track 02)<br>`src/components/dashboard/**` (Track 02)<br>`src/app/scanner/**` (Track 04)<br>`src/app/simulator/**` (Track 04)<br>`src/app/api/**` (Track 04)<br>`src/lib/fallbacks/**` (Track 04 & 05)<br>`supabase/seed.sql` (Track 05) |
 
 ---
 
-### Member 4 — Scanner · Simulator · AI APIs · Fallbacks
+### Track 04 — SOW Scanner, Drift Simulator & AI APIs
+* **Assigned Member:** Member 4
+* **Feature Branch:** `feat/scanner-simulator`
 
 | Status | Paths |
-|:-------|:------|
-| ✅ **ALLOW** | `src/app/scanner/**` |
-| ✅ **ALLOW** | `src/app/simulator/**` |
-| ✅ **ALLOW** | `src/app/api/scan-sow/**` |
-| ✅ **ALLOW** | `src/app/api/parse-scope/**` |
-| ✅ **ALLOW** | `src/components/scanner/**` |
-| ✅ **ALLOW** | `src/components/simulator/**` |
-| ✅ **ALLOW** | `src/lib/fallbacks/**` (JSON fallback files) |
-| ❌ **FORBID** | All 🔒 Shared Core paths above |
-| ❌ **FORBID** | `src/app/page.tsx` — Member 2 |
-| ❌ **FORBID** | `src/app/login/**` — Member 2 |
-| ❌ **FORBID** | `src/app/dashboard/**` — Member 2 |
-| ❌ **FORBID** | `src/components/landing/**` — Member 2 |
-| ❌ **FORBID** | `src/components/dashboard/**` — Member 2 |
-| ❌ **FORBID** | `src/app/approve/**` — Member 3 |
-| ❌ **FORBID** | `src/app/ledger/**` — Member 3 |
-| ❌ **FORBID** | `src/components/portal/**` — Member 3 |
-| ❌ **FORBID** | `src/components/ledger/**` — Member 3 |
-| ❌ **FORBID** | `supabase/seed.sql` — Member 5 |
-| ❌ **FORBID** | `src/lib/fallbacks/vastrakart-demo.ts` — Member 5 owns this specific file |
+|:---|:---|
+| ✅ **ALLOW (Full Write)** | `src/app/scanner/**`<br>`src/app/simulator/**`<br>`src/app/api/scan-sow/**`<br>`src/app/api/parse-scope/**`<br>`src/components/scanner/**`<br>`src/components/simulator/**`<br>`src/lib/fallbacks/*.json` (JSON fallback files) |
+| ❌ **FORBID (Read-Only / No Access)** | All 🔒 Shared Core files<br>`src/app/page.tsx` (Track 02)<br>`src/app/login/**` (Track 02)<br>`src/app/dashboard/**` (Track 02)<br>`src/app/approve/**` (Track 03)<br>`src/app/ledger/**` (Track 03)<br>`src/components/portal/**` (Track 03)<br>`src/components/ledger/**` (Track 03)<br>`src/lib/fallbacks/vastrakart-demo.ts` (Track 05 owns TypeScript mirror)<br>`supabase/seed.sql` (Track 05) |
 
 ---
 
-### Member 5 — Demo Fixtures · SQL Seed · QA
+### Track 05 — Demo Seed, Fixtures & End-to-End QA
+* **Assigned Member:** Member 5
+* **Feature Branch:** `feat/demo-fixtures`
 
 | Status | Paths |
-|:-------|:------|
-| ✅ **ALLOW** | `supabase/seed.sql` |
-| ✅ **ALLOW** | `src/lib/fallbacks/vastrakart-demo.ts` |
-| ✅ **ALLOW** | `DEMO_SCRIPT.md` |
-| ✅ **ALLOW (read-only QA)** | All `src/app/**` pages (read to verify, never edit) |
-| ✅ **ALLOW (read-only QA)** | All `src/components/**` (read to verify, never edit) |
-| ❌ **FORBID** | All 🔒 Shared Core paths above |
-| ❌ **FORBID** | `src/lib/fallbacks/*.json` — Member 4 owns the JSON files |
-| ❌ **FORBID** | Any `src/app/**` route files (edit rights belong to M2/M3/M4) |
-| ❌ **FORBID** | Any `src/components/**` component files (edit rights belong to M2/M3/M4) |
+|:---|:---|
+| ✅ **ALLOW (Full Write)** | `supabase/seed.sql`<br>`src/lib/fallbacks/vastrakart-demo.ts`<br>`DEMO_SCRIPT.md` |
+| ✅ **ALLOW (Read-Only QA)** | All `src/app/**` routes (read to verify UI and data alignment)<br>All `src/components/**` (read to inspect props and state) |
+| ❌ **FORBID (Read-Only / No Access)** | All 🔒 Shared Core files<br>Direct editing of any `src/app/**` or `src/components/**` files (file bugs for teammates to fix)<br>`src/lib/fallbacks/*.json` (Track 04 owns JSON files) |
 
 ---
 
-## 📋 Request Protocol for Shared-Core Changes
+## 📋 Protocol for Requesting Shared-Core Changes
 
-If you — human or AI agent — need a change to any 🔒 file (especially `src/types/csc.ts` or `src/lib/engine/swap-math.ts`):
+If any teammate or AI agent discovers a missing interface property, new table requirement, or shared utility need:
 
-### Step 1 — STOP. Do not edit the file.
+```text
+[Step 1: STOP]
+Do NOT edit src/types/csc.ts, swap-math.ts, schema.sql, or any locked file.
 
-An AI agent must tell the human:  
-> *"This change requires editing a shared-core file (`src/types/csc.ts`). I cannot make this edit. Please follow the shared-core request protocol."*
+[Step 2: REQUEST]
+Notify the developer to open a GitHub Issue or send a request to Member 1 (Lead Integrator):
+  • File to change: src/types/csc.ts
+  • Proposed modification: Add field `resolved_at: string | null` to SowAmbiguity
+  • Technical rationale: Required for audit timeline tracking on /scanner
+  • Consuming track: Track 04
 
-### Step 2 — Open a GitHub issue (or message Member 1) with:
+[Step 3: IMPLEMENT ON LEAD BRANCH]
+Member 1 adds the change on `feat/shared-shell`, verifies `npx tsc --noEmit`,
+and merges to `main`.
 
-```
-Title: [Shared Core Request] Add `resolvedAt: string` to SowAmbiguity
-
-Body:
-  File:    src/types/csc.ts
-  Change:  Add field `resolvedAt: string | null` to interface SowAmbiguity
-  Reason:  Track when ambiguity was resolved for the audit timeline
-  Consumers:
-    - src/app/scanner/page.tsx (Member 4)
-    - src/lib/fallbacks/scan-sow-fallback.json (Member 4)
+[Step 4: REBASE]
+All teammates fetch and rebase onto origin/main before using the new type:
+  git fetch origin
+  git rebase origin/main
 ```
 
-### Step 3 — Member 1 applies the change
-
-On branch `feat/shared-shell`, Member 1:
-1. Edits the locked file
-2. Runs `npx tsc --noEmit` — must exit 0
-3. Merges to `main` with a conventional commit
-
-### Step 4 — All teammates sync
-
-```bash
-git fetch origin
-git rebase origin/main
-# Then resume your work
-```
-
-> [!WARNING]
-> **Never cherry-pick or stash-pop around a shared-core change.** Always rebase on the full merge commit.
-
 ---
 
-## ⚙️ Universal Anti-Conflict Rules for AI Agents
+## ⚙️ Universal AI Agent Constraints
 
-These apply regardless of which member's agent you are:
-
-1. **Read your track file** (`docs/team-workflow/tracks/track-0X-*.md`) before writing any code.
-2. **Never open a FORBID file with intent to write** — not even to "just fix a small bug."
-3. **Never install packages** without Lead Integrator approval. No silent `pnpm add`.
-4. **Never hardcode secrets.** Use `process.env.NEXT_PUBLIC_SUPABASE_URL` etc.
-5. **Never alter VastraKart canonical numbers** (`₹1,50,000`, `120 hrs`, `+14 hr drift`, token `demo-csc-892a`) without M1 + M5 sign-off.
-6. **Never run `git add`, `git commit`, or `git push`.** Humans commit.
-7. **Always run `npx tsc --noEmit`** before marking any task done. Zero errors required.
+1. **Law 1 Enforcement:** Every agent must verify `git branch --show-current` before starting work. If on `main`, halt immediately and check out a `feat/*` branch.
+2. **Never commit to `main`:** Auto-commits and direct pushes to `main` are strictly forbidden.
+3. **No package installation:** Do not run `npm install <pkg>` or `pnpm add <pkg>` without Track 01 Lead approval.
+4. **Preserve Demo Numbers:** Never change canonical VastraKart demo numbers (`₹1,50,000`, `120 hrs`, `₹1,250/hr`, `+14 hr drift`, `demo-csc-892a`).
+5. **Always Verify:** Run `npx tsc --noEmit` before concluding any turn.
