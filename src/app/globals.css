@@ -1,26 +1,222 @@
+/**
+ * CSC Guardrail — Global Styles
+ * Design System: "Ledger Slate & Trust Indigo"
+ *
+ * Aesthetic: Light-first, high-trust B2B FinTech & Contract SaaS.
+ * Modelled after Stripe, Ramp, and Linear for crisp readability on
+ * laptops and bright hackathon projector screens.
+ */
+
 @import "tailwindcss";
 
+/* ─────────────────────────────────────────────────────────────
+   1. CSC Design Token Variables
+   ───────────────────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Canvas & Surfaces */
+  --bg-canvas:          #F8FAFC; /* slate-50  — main application background    */
+  --bg-surface:         #FFFFFF; /* white     — cards, tables, modals, sidebar  */
+  --bg-subtle:          #F1F5F9; /* slate-100 — table headers, input fills      */
+
+  /* Borders */
+  --border-default:     #E2E8F0; /* slate-200 — 1px solid card/table borders    */
+  --border-strong:      #CBD5E1; /* slate-300 — hover borders, active outlines  */
+
+  /* Text */
+  --text-primary:       #0F172A; /* slate-900 — headings, metrics, table values */
+  --text-secondary:     #475569; /* slate-600 — subtitles, descriptions, labels */
+  --text-muted:         #64748B; /* slate-500 — timestamps, helper captions     */
+
+  /* Brand — Trust Indigo */
+  --brand-primary:      #4F46E5; /* indigo-600 — CTAs, active nav, Swap highlight */
+  --brand-hover:        #4338CA; /* indigo-700 — button hover states              */
+  --brand-tint:         #EEF2FF; /* indigo-50  — active nav bg & focus rings      */
+
+  /* Status — Safe (in-scope, approved, swappable) */
+  --status-safe:        #059669; /* emerald-600 — in-scope, margin saved, approved */
+  --status-safe-bg:     #ECFDF5; /* emerald-50  — safe pill & callout backgrounds  */
+
+  /* Status — Warn (ambiguity, drift) */
+  --status-warn:        #D97706; /* amber-600 — SOW ambiguity flags & drift alerts  */
+  --status-warn-bg:     #FFFBEB; /* amber-50  — ambiguity scanner card backgrounds  */
+
+  /* Status — Danger (budget breach, unresolved conflict) */
+  --status-danger:      #DC2626; /* red-600 — budget cap breach / high-risk conflict */
+  --status-danger-bg:   #FEF2F2; /* red-50  — danger pill & callout backgrounds      */
+
+  /* Legacy Next.js compatibility aliases (used by layout.tsx) */
+  --background:  var(--bg-canvas);
+  --foreground:  var(--text-primary);
 }
+
+/* ─────────────────────────────────────────────────────────────
+   2. Tailwind Theme Bridge (v4 @theme inline)
+   Maps CSS vars → Tailwind color utilities
+   ───────────────────────────────────────────────────────────── */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Background utilities */
+  --color-background:          var(--bg-canvas);
+  --color-foreground:          var(--text-primary);
+  --color-canvas:              var(--bg-canvas);
+  --color-surface:             var(--bg-surface);
+  --color-subtle:              var(--bg-subtle);
+
+  /* Border utilities */
+  --color-border:              var(--border-default);
+  --color-border-strong:       var(--border-strong);
+
+  /* Text utilities */
+  --color-text-primary:        var(--text-primary);
+  --color-text-secondary:      var(--text-secondary);
+  --color-text-muted:          var(--text-muted);
+
+  /* Brand utilities */
+  --color-brand:               var(--brand-primary);
+  --color-brand-hover:         var(--brand-hover);
+  --color-brand-tint:          var(--brand-tint);
+
+  /* Status utilities */
+  --color-safe:                var(--status-safe);
+  --color-safe-bg:             var(--status-safe-bg);
+  --color-warn:                var(--status-warn);
+  --color-warn-bg:             var(--status-warn-bg);
+  --color-danger:              var(--status-danger);
+  --color-danger-bg:           var(--status-danger-bg);
+
+  /* Typography */
+  --font-sans:   var(--font-inter, var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif));
+  --font-mono:   var(--font-geist-mono, ui-monospace, "JetBrains Mono", monospace);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─────────────────────────────────────────────────────────────
+   3. Base / Reset
+   ───────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.875rem;      /* 14px — body & table cells */
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. Tabular Numbers Utility (.tabular-nums)
+   Required for ₹1,50,000 / +14 hrs / #CSC-892A columns to align.
+   ───────────────────────────────────────────────────────────── */
+
+.tabular-nums,
+.font-mono {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* KPI hero numbers (₹ / hrs counters) */
+.kpi-number {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.75rem;    /* 28px */
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+/* Verification hash badges (#CSC-892A) */
+.verification-hash {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.025em;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. Status Pill Grammar
+   Reusable pill base + semantic modifiers
+   ───────────────────────────────────────────────────────────── */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;      /* rounded-full */
+  font-size: 0.75rem;         /* 12px */
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Locked → Slate */
+.pill-locked {
+  background-color: #F1F5F9;  /* slate-100 */
+  color:            #334155;  /* slate-700 */
+  border-color:     #CBD5E1;  /* slate-300 */
+}
+
+/* Swappable (14 hrs) → Emerald */
+.pill-safe,
+.pill-swappable {
+  background-color: var(--status-safe-bg);
+  color:            var(--status-safe);
+  border-color:     #A7F3D0;  /* emerald-200 */
+}
+
+/* Ambiguous Spec / Drift +14 hrs → Amber */
+.pill-warn,
+.pill-drift {
+  background-color: var(--status-warn-bg);
+  color:            var(--status-warn);
+  border-color:     #FDE68A;  /* amber-200 */
+}
+
+/* Over Cap / Breach → Red */
+.pill-danger,
+.pill-breach {
+  background-color: var(--status-danger-bg);
+  color:            var(--status-danger);
+  border-color:     #FECACA;  /* red-200 */
+}
+
+/* ─────────────────────────────────────────────────────────────
+   6. Card & Layout Defaults
+   ───────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 0.75rem;     /* 12px — rounded-xl */
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.04); /* shadow-xs */
+}
+
+/* Sidebar shell — 240px fixed left panel */
+.app-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border-default);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   7. Focus Ring Utility
+   ───────────────────────────────────────────────────────────── */
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
 }
