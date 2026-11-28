@@ -188,6 +188,49 @@ export interface AuditLedgerEntry {
   created_at: string;
 }
 
+/** Alias for AuditLedgerEntry used across Track 01 and Track 03 specs. */
+export type AuditLedger = AuditLedgerEntry;
+
+/** Lightweight ambiguity draft returned by `POST /api/scan-sow` before DB persistence. */
+export interface SowAmbiguityDraft {
+  clause_title: string;
+  vague_excerpt: string;
+  missing_details: string;
+  clarification_question: string;
+}
+
+/** Deterministic result returned by `calculateScopeSwap()`. */
+export interface ScopeSwapResult {
+  // ── Drift (what's being added) ──────────────
+  drift_hours: number;
+  drift_cost_inr: number;
+
+  // ── Reclaimed (what's being swapped out) ────
+  reclaimed_hours: number;
+  reclaimed_cost_inr: number;
+
+  // ── Net impact ───────────────────────────────
+  net_delta_hours: number;
+  net_delta_cost_inr: number;
+
+  // ── Budget health ────────────────────────────
+  hours_remaining_before: number;
+  hours_remaining_after: number;
+  is_over_hour_budget: boolean;
+  projected_spend_inr: number;
+  is_over_budget_cap: boolean;
+  budget_headroom_inr: number;
+
+  // ── Swap viability ───────────────────────────
+  viable_swap_candidates: ScopeItem[];
+  is_net_zero_swap: boolean;
+  audit_summary: string;
+
+  // ── Convenience references for Portal & Simulator ─
+  swapped_out?: ScopeItem | null;
+  incoming_items?: RequestedItem[];
+}
+
 // ─────────────────────────────────────────────
 // 7. VastraKart Demo Seed Constants
 // ─────────────────────────────────────────────

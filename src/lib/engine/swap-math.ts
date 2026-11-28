@@ -9,8 +9,14 @@
  * @module lib/engine/swap-math
  */
 
-import type { ScopeItem, RequestedItem } from "@/types/csc";
-import { HOURLY_RATE_INR } from "@/types/csc";
+import type { ScopeItem, ScopeSwapResult } from "@/types/csc";
+import {
+  DEMO_BUDGET_CAP_INR,
+  DEMO_TOTAL_HOURS,
+  HOURLY_RATE_INR,
+} from "@/types/csc";
+
+export type { ScopeSwapResult };
 
 // ─────────────────────────────────────────────
 // Input / Output Types
@@ -46,52 +52,6 @@ export interface ScopeSwapInput {
   hours_consumed: number;
   /** Hourly billing rate (defaults to HOURLY_RATE_INR = ₹1,250). */
   hourly_rate_inr?: number;
-}
-
-/** Detailed result returned by `calculateScopeSwap`. */
-export interface ScopeSwapResult {
-  // ── Drift (what's being added) ──────────────
-  /** Total new hours requested by the client. */
-  drift_hours: number;
-  /** Total ₹ cost of the drift at the hourly rate. */
-  drift_cost_inr: number;
-
-  // ── Reclaimed (what's being swapped out) ────
-  /** Total hours freed by deferring removed items. */
-  reclaimed_hours: number;
-  /** ₹ value of the reclaimed hours. */
-  reclaimed_cost_inr: number;
-
-  // ── Net impact ───────────────────────────────
-  /** drift_hours − reclaimed_hours.  Negative = net hours saved. */
-  net_delta_hours: number;
-  /** drift_cost_inr − reclaimed_cost_inr.  Negative = net saving. */
-  net_delta_cost_inr: number;
-
-  // ── Budget health ────────────────────────────
-  /** Remaining hours before the swap: total_contracted − hours_consumed. */
-  hours_remaining_before: number;
-  /** Remaining hours after the swap. */
-  hours_remaining_after: number;
-  /** Is the project over its contracted hour budget after the swap? */
-  is_over_hour_budget: boolean;
-  /** Projected total spend (hours_consumed + drift) × hourly_rate. */
-  projected_spend_inr: number;
-  /** Is the projected spend over the fixed budget cap? */
-  is_over_budget_cap: boolean;
-  /** ₹ headroom remaining after the swap (negative = breach amount). */
-  budget_headroom_inr: number;
-
-  // ── Swap viability ───────────────────────────
-  /** Items from the swappable pool that can cover the drift. */
-  viable_swap_candidates: ScopeItem[];
-  /**
-   * Whether the drift can be fully absorbed within the existing hour
-   * budget by swapping out the removed_items (net_delta_hours ≤ 0).
-   */
-  is_net_zero_swap: boolean;
-  /** Human-readable one-liner for the audit ledger summary field. */
-  audit_summary: string;
 }
 
 // ─────────────────────────────────────────────
@@ -193,7 +153,74 @@ function buildAuditSummary(input: ScopeSwapInput, result: ScopeSwapResult): stri
  * // result.is_net_zero_swap   === true
  * // result.is_over_budget_cap === false
  */
-export function calculateScopeSwap(input: ScopeSwapInput): ScopeSwapResult {
+/**
+ * Select the best matching swappable item(s) to absorb `driftHours`.
+ * Prefers an exact hour match (e.g. 14 hrs -> Mobile-Responsive Storefront),
+ * otherwise greedily accumulates largest eligible items until drift is covered.
+ */
+function selectSwapOutItems(
+  swappableItems: ScopeItem[],
+  driftHours: number
+): SwapOutItem[] {
+  if (driftHours <= 0) return [];
+  const eligible = swappableItems.filter(
+    (item) =>
+      item.is_swappable &&
+      (item.status === "not_started" || item.status === "in_progress")
+  );
+  const exact = eligible.find((item) => item.hours === driftHours);
+  if (exact) {
+    return [{ scope_item_id: exact.id, title: exact.title, hours: exact.hours }];
+  }
+
+  const sorted = [...eligible].sort((a, b) => b.hours - a.hours);
+  const selected: SwapOutItem[] = [];
+  let covered = 0;
+  for (const item of sorted) {
+    if (covered >= driftHours) break;
+    selected.push({ scope_item_id: item.id, title: item.title, hours: item.hours });
+    covered += item.hours;
+  }
+  return selected;
+}
+
+export function calculateScopeSwap(input: ScopeSwapInput): ScopeSwapResult;
+export function calculateScopeSwap(
+  swappableItems: ScopeItem[],
+  driftHours: number,
+  hourlyRate?: number
+): ScopeSwapResult;
+export function calculateScopeSwap(
+  inputOrItems: ScopeSwapInput | ScopeItem[],
+  driftHoursArg?: number,
+  hourlyRateArg?: number
+): ScopeSwapResult {
+  const input: ScopeSwapInput = Array.isArray(inputOrItems)
+    ? (() => {
+        const driftHours = Math.max(0, driftHoursArg ?? 0);
+        const rate = hourlyRateArg ?? HOURLY_RATE_INR;
+        const removed = selectSwapOutItems(inputOrItems, driftHours);
+        return {
+          added_items:
+            driftHours > 0
+              ? [
+                  {
+                    title: "Incoming Scope Drift",
+                    hours: driftHours,
+                    cost_inr: hoursToInr(driftHours, rate),
+                  },
+                ]
+              : [],
+          removed_items: removed,
+          swappable_pool: inputOrItems.filter((item) => item.is_swappable),
+          budget_cap_inr: DEMO_BUDGET_CAP_INR,
+          total_contracted_hours: DEMO_TOTAL_HOURS,
+          hours_consumed: 54,
+          hourly_rate_inr: rate,
+        };
+      })()
+    : inputOrItems;
+
   const rate = input.hourly_rate_inr ?? HOURLY_RATE_INR;
 
   // ── 1. Drift totals ───────────────────────────
@@ -226,6 +253,16 @@ export function calculateScopeSwap(input: ScopeSwapInput): ScopeSwapResult {
   );
   const is_net_zero_swap = net_delta_hours <= 0;
 
+  const primaryRemoved = input.removed_items[0];
+  const swapped_out = primaryRemoved
+    ? (input.swappable_pool.find((item) => item.id === primaryRemoved.scope_item_id) ?? null)
+    : null;
+  const incoming_items = input.added_items.map((item) => ({
+    title: item.title,
+    hours: item.hours,
+    cost_inr: item.cost_inr ?? hoursToInr(item.hours, rate),
+  }));
+
   // ── 6. Build result ───────────────────────────
   const partial: ScopeSwapResult = {
     drift_hours,
@@ -243,6 +280,8 @@ export function calculateScopeSwap(input: ScopeSwapInput): ScopeSwapResult {
     viable_swap_candidates,
     is_net_zero_swap,
     audit_summary: "", // placeholder, filled below
+    swapped_out,
+    incoming_items,
   };
 
   partial.audit_summary = buildAuditSummary(input, partial);
