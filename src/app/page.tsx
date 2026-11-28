@@ -7,7 +7,7 @@ import { ScenarioCallout } from "@/components/landing/ScenarioCallout";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
-  title: "CSC Guardrail — Client Scope & Change Guardrail for Agencies",
+  title: "CSC Guardrail — Client Scope & Change Protection",
   description:
     "Protect fixed-price agency contracts from scope creep with a continuous Two-Layer Defense: Day-0 SOW Ambiguity Scanner and Mid-Sprint Zero-Cost Scope Swaps.",
 };

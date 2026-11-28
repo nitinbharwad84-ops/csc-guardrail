@@ -20,7 +20,7 @@ import {
 import { createClient, DEMO_MODE } from "@/lib/supabase/client";
 
 /* ------------------------------------------------------------------ */
-/* Google brand icon (official SVG, no external dependency)            */
+/* Google brand icon (official SVG, accessible, no external package)   */
 /* ------------------------------------------------------------------ */
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -46,9 +46,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Notification banners — isolated in their own component so they can */
-/* use useSearchParams() inside a Suspense boundary without blocking  */
-/* the full page from prerendering.                                   */
+/* Notification banners — wrapped in Suspense for useSearchParams()    */
 /* ------------------------------------------------------------------ */
 function LoginNotifications() {
   const searchParams = useSearchParams();
@@ -57,38 +55,39 @@ function LoginNotifications() {
   const isVerified = searchParams.get("verified") === "true";
   const errorParam = searchParams.get("error");
 
-  const hasNotification = isLoggedOut || isUnauthorized || isVerified || errorParam;
+  const hasNotification =
+    isLoggedOut || isUnauthorized || isVerified || Boolean(errorParam);
   if (!hasNotification) return null;
 
   return (
-    <>
+    <div className="space-y-3 mb-6">
       {/* Sign-out confirmation */}
       {isLoggedOut && (
         <div
           role="status"
-          className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5 shadow-2xs"
         >
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold">Successfully Signed Out</span>
             <p className="text-emerald-800">
-              Session cookies have been cleared. You are in public mode.
+              Your session cookies have been cleared. You are currently in public mode.
             </p>
           </div>
         </div>
       )}
 
-      {/* Email verified confirmation */}
+      {/* Email verified notice */}
       {isVerified && (
         <div
           role="status"
-          className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-xs text-emerald-900 flex items-start gap-2.5 shadow-2xs"
         >
           <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold">Email Verified</span>
             <p className="text-emerald-800">
-              Your email has been confirmed. Please sign in to continue.
+              Your email has been confirmed. Please sign in with your credentials to continue.
             </p>
           </div>
         </div>
@@ -98,33 +97,32 @@ function LoginNotifications() {
       {isUnauthorized && (
         <div
           role="alert"
-          className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5"
+          className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs"
         >
           <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold">Authentication Required</span>
             <p className="text-amber-800">
-              Access to live agency contracts requires valid credentials, or
-              click below for the isolated demo workspace.
+              Access to live agency contracts requires valid credentials, or use the demo workspace below.
             </p>
           </div>
         </div>
       )}
 
-      {/* OAuth / callback error */}
+      {/* OAuth / callback error notice */}
       {errorParam && (
         <div
           role="alert"
-          className="mb-6 rounded-xl border border-red-200 bg-red-50 p-3.5 text-xs text-red-900 flex items-start gap-2.5"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs text-rose-900 flex items-start gap-2.5 shadow-2xs"
         >
-          <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+          <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
           <div className="space-y-0.5">
             <span className="font-bold">Authentication Error</span>
-            <p className="text-red-800">{errorParam}</p>
+            <p className="text-rose-800">{errorParam}</p>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
 
@@ -142,20 +140,22 @@ export default function LoginPage() {
 
   const anyLoading = loading || googleLoading || demoLoading;
 
-  /* ---- Demo Bypass ---- */
+  /* ---- Demo Workspace Entry ---- */
   const handleDemoBypass = () => {
     setDemoLoading(true);
     setErrorMessage(null);
     setValidationError(null);
 
+    // Set demo cookie with 24h expiration
     if (typeof document !== "undefined") {
       document.cookie =
         "csc-demo-bypass=true; path=/; max-age=86400; SameSite=Lax";
     }
 
+    // Direct transition to dashboard demo workspace
     setTimeout(() => {
       router.push("/dashboard");
-    }, 200);
+    }, 150);
   };
 
   /* ---- Google OAuth ---- */
@@ -167,7 +167,7 @@ export default function LoginPage() {
     try {
       if (DEMO_MODE) {
         setErrorMessage(
-          "Google sign-in requires Supabase credentials. Use the demo workspace below."
+          "Google sign-in requires Supabase credentials in .env.local. Explore the demo workspace below to evaluate the system offline."
         );
         setGoogleLoading(false);
         return;
@@ -187,18 +187,19 @@ export default function LoginPage() {
 
       if (error) {
         setErrorMessage(
-          "Unable to start Google sign-in. Please try again or use email."
+          error.message ||
+            "Unable to connect to Google provider. Please verify Supabase provider settings or use email sign-in."
         );
         setGoogleLoading(false);
       }
-      // On success, the browser is redirected to Google — no further action needed
+      // Redirect to Google handles completion
     } catch {
-      setErrorMessage("Connection error. Please try again.");
+      setErrorMessage("Authentication connection failed. Please try again.");
       setGoogleLoading(false);
     }
   };
 
-  /* ---- Email/Password Sign In ---- */
+  /* ---- Email / Password Sign In ---- */
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -233,7 +234,7 @@ export default function LoginPage() {
     try {
       if (DEMO_MODE) {
         setErrorMessage(
-          "Supabase credentials not configured. Click 'Enter Demo Workspace' above to access the VastraKart benchmark."
+          "Supabase credentials are not configured in environment. Click 'Explore Demo Workspace' below to evaluate the offline VastraKart benchmark."
         );
         setLoading(false);
         return;
@@ -246,16 +247,16 @@ export default function LoginPage() {
       });
 
       if (error) {
-        // Generic message to prevent account enumeration
+        // Generic message prevents account enumeration
         setErrorMessage(
-          "Invalid email or password. Please check your credentials."
+          "Invalid email or password. Please verify your credentials or reset your password."
         );
         setLoading(false);
         return;
       }
 
       if (data.session) {
-        // Clear demo bypass cookie when switching to authenticated mode
+        // Clear any old demo bypass cookie when switching to authenticated mode
         if (typeof document !== "undefined") {
           document.cookie =
             "csc-demo-bypass=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
@@ -263,18 +264,18 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch {
-      setErrorMessage("Authentication connection failed. Please try again.");
+      setErrorMessage("Authentication service unreachable. Please try again.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
+    <div className="min-h-screen flex flex-col justify-center py-10 px-4 sm:px-6 lg:px-8 bg-slate-50 text-slate-900">
       {/* Top back navigation */}
       <div className="absolute top-6 left-6">
         <Link
           href="/"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors rounded-lg px-2.5 py-1.5 hover:bg-slate-200/50"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors rounded-lg px-2.5 py-1.5 hover:bg-slate-200/60"
         >
           <ArrowLeft className="h-4 w-4" />
           <span>Back to Landing Page</span>
@@ -287,85 +288,61 @@ export default function LoginPage() {
           <Link
             href="/"
             className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600 text-white shadow-xs hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+            aria-label="CSC Guardrail Home"
           >
             <ShieldCheck className="h-7 w-7" aria-hidden="true" />
           </Link>
           <h1 className="mt-4 font-sans text-2xl font-bold tracking-tight text-slate-900">
-            Agency Workspace Sign In
+            Sign In to CSC Guardrail
           </h1>
           <p className="mt-1.5 text-xs text-slate-500">
-            Access CSC Guardrail for <strong>PixelCraft Studio</strong>
+            Agency Workspace &middot; Fixed-Price Scope Protection
           </p>
         </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-xs">
-          {/* Notification banners — Suspense boundary for useSearchParams */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-7 sm:p-8 shadow-xs">
+          {/* Notification banners via Suspense */}
           <Suspense fallback={null}>
             <LoginNotifications />
           </Suspense>
 
-          {/* Quick Demo Workspace Access */}
-          <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 mb-6">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <span className="text-xs font-bold text-indigo-950">
-                  Hackathon / Evaluation Demo Access
-                </span>
-                <p className="mt-0.5 text-xs text-indigo-800 leading-relaxed">
-                  Enter the isolated <strong>PixelCraft Studio</strong>{" "}
-                  workspace with pre-loaded VastraKart fixed contract data
-                  (₹1,50,000 cap · 120 hrs).
-                </p>
-                <button
-                  type="button"
-                  onClick={handleDemoBypass}
-                  disabled={anyLoading}
-                  className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-60"
-                >
-                  {demoLoading ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Entering Demo Workspace...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Enter Demo Workspace (PixelCraft Studio)</span>
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </>
-                  )}
-                </button>
+          {/* Validation Error Alert */}
+          {validationError && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 flex items-start gap-2 shadow-2xs"
+            >
+              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <span>{validationError}</span>
+            </div>
+          )}
+
+          {/* Authentication Error Alert */}
+          {errorMessage && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900 flex items-start gap-2 shadow-2xs"
+            >
+              <AlertTriangle className="h-4 w-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-semibold">Notice:</span>
+                <p>{errorMessage}</p>
               </div>
             </div>
-          </div>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div
-              className="absolute inset-0 flex items-center"
-              aria-hidden="true"
-            >
-              <div className="w-full border-t border-slate-200" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-3 font-semibold text-slate-400">
-                Or sign in with your account
-              </span>
-            </div>
-          </div>
+          )}
 
           {/* Google OAuth Button */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={anyLoading}
-            className="mb-4 inline-flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white py-2.5 px-4 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:opacity-50"
+            className="inline-flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white py-2.5 px-4 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-50"
           >
             {googleLoading ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
                 <span>Connecting to Google...</span>
               </>
             ) : (
@@ -376,47 +353,19 @@ export default function LoginPage() {
             )}
           </button>
 
-          {/* Email divider */}
-          <div className="relative mb-4">
-            <div
-              className="absolute inset-0 flex items-center"
-              aria-hidden="true"
-            >
+          {/* Divider */}
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
               <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-white px-3 text-slate-400">
-                or use email
+              <span className="bg-white px-3 font-medium text-slate-400">
+                Or continue with email
               </span>
             </div>
           </div>
 
-          {/* Validation Error */}
-          {validationError && (
-            <div
-              role="alert"
-              className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 flex items-start gap-2"
-            >
-              <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <span>{validationError}</span>
-            </div>
-          )}
-
-          {/* Auth Error */}
-          {errorMessage && (
-            <div
-              role="alert"
-              className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800 flex items-start gap-2"
-            >
-              <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-              <div className="space-y-1">
-                <span className="font-semibold">Authentication Notice:</span>
-                <p>{errorMessage}</p>
-              </div>
-            </div>
-          )}
-
-          {/* Email/Password Form */}
+          {/* Real Email / Password Form */}
           <form onSubmit={handleSignIn} className="space-y-4" noValidate>
             <div>
               <label
@@ -453,7 +402,7 @@ export default function LoginPage() {
                 </label>
                 <Link
                   href="/login/forgot-password"
-                  className="text-[11px] font-medium text-indigo-600 hover:underline"
+                  className="text-[11px] font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -476,7 +425,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 focus-visible:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -491,7 +440,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={anyLoading}
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-transparent bg-slate-900 py-2.5 px-4 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 disabled:opacity-50"
+              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 py-2.5 px-4 text-xs font-semibold text-white shadow-xs hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 disabled:opacity-50"
             >
               {loading ? (
                 <>
@@ -505,25 +454,58 @@ export default function LoginPage() {
           </form>
 
           {/* Create account link */}
-          <p className="mt-5 text-center text-xs text-slate-500">
+          <p className="mt-4 text-center text-xs text-slate-500">
             Don&apos;t have an account?{" "}
             <Link
               href="/login/register"
-              className="font-semibold text-indigo-600 hover:underline"
+              className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline"
             >
               Create account
             </Link>
           </p>
 
-          {/* Security & Isolation Disclaimer */}
-          <div className="mt-6 border-t border-slate-100 pt-4">
-            <div className="flex items-start gap-2 text-[11px] text-slate-500">
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span>
-                Demo mode delivers isolated in-memory benchmark data. Demo
-                bypass cookies never grant authorization to live production
-                databases.
+          {/* Section Divider: Demo Workspace Below Form */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center" aria-hidden="true">
+              <div className="w-full border-t border-slate-200" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase tracking-wider">
+              <span className="bg-white px-3 font-semibold text-slate-400 text-[10px]">
+                Or evaluate offline
               </span>
+            </div>
+          </div>
+
+          {/* Demo Workspace Access Card (Positioned below real auth) */}
+          <div className="rounded-xl border border-indigo-200/90 bg-indigo-50/60 p-4">
+            <div className="flex items-start gap-3">
+              <Sparkles className="h-4 w-4 text-indigo-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <span className="text-xs font-bold text-slate-900 block">
+                  Isolated Demo Workspace
+                </span>
+                <p className="mt-1 text-[11px] text-slate-600 leading-relaxed">
+                  Evaluate CSC Guardrail using the pre-loaded <strong>PixelCraft Studio</strong> &middot; VastraKart fixed-price contract demo (₹1,50,000 cap &middot; 120 hrs). Works instantly without database credentials.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleDemoBypass}
+                  disabled={anyLoading}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-2xs hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 disabled:opacity-60"
+                >
+                  {demoLoading ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <span>Entering Demo...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Explore Demo Workspace</span>
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -535,7 +517,7 @@ export default function LoginPage() {
             href="/"
             className="font-medium text-indigo-600 hover:underline"
           >
-            CSC Guardrail Playbook
+            CSC Guardrail Architecture
           </Link>
         </p>
       </div>

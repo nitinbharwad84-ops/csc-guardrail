@@ -36,9 +36,9 @@ export function KpiCards({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       {/* 1. Contract Cap Card */}
-      <div className="card p-4 sm:p-5 bg-white border border-slate-200 hover:border-slate-300 transition-colors">
+      <div className="rounded-xl p-5 bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between min-h-[140px]">
         <div className="flex items-center justify-between text-slate-500">
-          <span className="text-[11px] font-semibold uppercase tracking-wider">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Contract Cap
           </span>
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
@@ -50,16 +50,18 @@ export function KpiCards({
             ₹{budgetCap.toLocaleString("en-IN")}
           </span>
           <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-            <span>₹{HOURLY_RATE_INR.toLocaleString("en-IN")}/hr</span>
-            <span className="font-semibold text-emerald-600">0% Cap Breach</span>
+            <span>₹{HOURLY_RATE_INR.toLocaleString("en-IN")}/hr rate</span>
+            <span className="font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60 text-[10px]">
+              0% Breach
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. Total Hours Breakdown */}
-      <div className="card p-4 sm:p-5 bg-white border border-slate-200 hover:border-slate-300 transition-colors">
+      {/* 2. Total Hours Breakdown Card */}
+      <div className="rounded-xl p-5 bg-white border border-slate-200/90 shadow-2xs hover:border-slate-300 transition-colors flex flex-col justify-between min-h-[140px]">
         <div className="flex items-center justify-between text-slate-500">
-          <span className="text-[11px] font-semibold uppercase tracking-wider">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Contract Hours
           </span>
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
@@ -71,10 +73,10 @@ export function KpiCards({
             {totalHours} hrs
           </span>
           <div className="mt-1 flex items-center justify-between text-xs text-slate-500">
-            <span className="font-mono tabular-nums">
-              Done: {completedHours}h · Active: {inProgressHours}h ({allocatedPercent}%)
+            <span className="font-mono tabular-nums text-[11px]">
+              Done {completedHours}h &middot; Active {inProgressHours}h ({allocatedPercent}%)
             </span>
-            <span className="font-mono font-semibold text-indigo-600 tabular-nums">
+            <span className="font-mono font-semibold text-indigo-700 tabular-nums">
               {remainingHours}h left
             </span>
           </div>
@@ -82,7 +84,7 @@ export function KpiCards({
       </div>
 
       {/* 3. Pending Change Requests Card */}
-      <div className="card p-4 sm:p-5 bg-amber-50/50 border border-amber-200/80 hover:border-amber-300 transition-colors">
+      <div className="rounded-xl p-5 bg-amber-50/40 border border-amber-200/90 shadow-2xs hover:border-amber-300 transition-colors flex flex-col justify-between min-h-[140px]">
         <div className="flex items-center justify-between text-amber-800">
           <span className="text-[11px] font-bold uppercase tracking-wider">
             Pending Changes
@@ -92,41 +94,43 @@ export function KpiCards({
           </div>
         </div>
         <div className="mt-3">
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono tabular-nums text-amber-900 tracking-tight">
-              {pendingRequestsCount} Pending
-            </span>
-          </div>
-          <div className="mt-1 flex items-center justify-between text-xs text-amber-800">
+          <span className="text-2xl font-bold font-mono tabular-nums text-amber-950 block tracking-tight">
+            {pendingRequestsCount} Pending
+          </span>
+          <div className="mt-1 flex items-center justify-between text-xs text-amber-900">
             <span className="font-mono font-semibold">#CSC-892A</span>
-            <span className="font-medium text-[11px]">Awaiting Sign-off</span>
+            <span className="font-semibold text-amber-800 bg-amber-100/70 px-1.5 py-0.5 rounded border border-amber-300/60 text-[10px]">
+              Awaiting Sign-off
+            </span>
           </div>
         </div>
       </div>
 
       {/* 4. Active Scope Drift Card */}
-      <div className="card p-4 sm:p-5 bg-amber-50/50 border border-amber-200/80 hover:border-amber-300 transition-colors">
+      <div className="rounded-xl p-5 bg-amber-50/40 border border-amber-200/90 shadow-2xs hover:border-amber-300 transition-colors flex flex-col justify-between min-h-[140px]">
         <div className="flex items-center justify-between text-amber-800">
           <span className="text-[11px] font-bold uppercase tracking-wider">
-            Active Drift
+            Active Scope Drift
           </span>
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
             <TrendingUp className="h-4 w-4" />
           </div>
         </div>
         <div className="mt-3">
-          <span className="text-2xl font-bold font-mono tabular-nums text-amber-900 block tracking-tight">
+          <span className="text-2xl font-bold font-mono tabular-nums text-amber-950 block tracking-tight">
             +{driftHours} hrs
           </span>
-          <div className="mt-1 flex items-center justify-between text-xs text-amber-800">
+          <div className="mt-1 flex items-center justify-between text-xs text-amber-900">
             <span>WhatsApp + Excel</span>
-            <span className="font-mono font-semibold tabular-nums">₹{driftCostInr.toLocaleString("en-IN")}</span>
+            <span className="font-mono font-bold tabular-nums">
+              ₹{driftCostInr.toLocaleString("en-IN")}
+            </span>
           </div>
         </div>
       </div>
 
       {/* 5. Swappable Pool & Margin Protected Card */}
-      <div className="card p-4 sm:p-5 bg-emerald-50/50 border border-emerald-200/80 hover:border-emerald-300 transition-colors">
+      <div className="rounded-xl p-5 bg-emerald-50/40 border border-emerald-200/90 shadow-2xs hover:border-emerald-300 transition-colors flex flex-col justify-between min-h-[140px]">
         <div className="flex items-center justify-between text-emerald-800">
           <span className="text-[11px] font-bold uppercase tracking-wider">
             Swappable Pool
@@ -137,12 +141,12 @@ export function KpiCards({
         </div>
         <div className="mt-3">
           <span className="text-2xl font-bold font-mono tabular-nums text-emerald-950 block tracking-tight">
-            {swappableCount} items · {swappableHours}h
+            {swappableCount} items &middot; {swappableHours}h
           </span>
           <div className="mt-1 flex items-center justify-between text-xs text-emerald-800">
             <span>Margin Protected</span>
-            <span className="font-mono font-bold tabular-nums text-emerald-900">
-              ₹{marginProtectedInr.toLocaleString("en-IN")}
+            <span className="font-mono font-bold tabular-nums text-emerald-900" title="Projected margin protected upon client approval">
+              ₹{marginProtectedInr.toLocaleString("en-IN")}*
             </span>
           </div>
         </div>

@@ -3,107 +3,144 @@
 import React from "react";
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
+import {
+  PendingIntegrationModal,
+  usePendingIntegration,
+} from "@/components/dashboard/PendingIntegrationModal";
 
 export function Footer() {
+  const { activeRoute, openPending, closePending } = usePendingIntegration();
+
   return (
-    <footer className="border-t border-slate-200 bg-white text-slate-600">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Brand info */}
-          <div className="md:col-span-2 space-y-4">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-                <ShieldCheck className="h-5 w-5" />
+    <>
+      <footer className="border-t border-slate-200 bg-white py-12 text-slate-600">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Brand column */}
+            <div className="md:col-span-2 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
+                  <ShieldCheck className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <span className="font-sans text-base font-bold text-slate-900 tracking-tight">
+                  CSC Guardrail
+                </span>
               </div>
-              <span className="font-sans text-base font-bold text-slate-900">
-                CSC Guardrail
-              </span>
+              <p className="text-xs text-slate-500 max-w-sm leading-relaxed">
+                Client Scope &amp; Change Guardrail: An automated Two-Layer Defense protecting agency fixed-fee margins against creep through Day-0 ambiguity detection and Mid-Sprint zero-cost scope swaps.
+              </p>
+              <div className="pt-2 text-xs font-mono text-slate-400">
+                PixelCraft Studio &middot; Statement of Work #CSC-001A
+              </div>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-sm">
-              Client Scope &amp; Change Guardrail is a two-layer defense system that stops fixed-price
-              agency scope creep before kickoff and during sprints through mathematical zero-cost scope swaps.
+
+            {/* 7-Screen System Navigation */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                System Workflow
+              </h4>
+              <ul className="mt-3 space-y-2 text-xs">
+                <li>
+                  <Link href="/" className="hover:text-indigo-600 transition-colors">
+                    01. Product Landing
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-indigo-600 transition-colors">
+                    02. Agency Login &amp; Demo
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openPending("/scanner")}
+                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                  >
+                    <span>03. SOW Scanner</span>
+                    <span className="text-[9px] text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">
+                      Pending
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <Link href="/dashboard" className="hover:text-indigo-600 transition-colors">
+                    04. Scope Health Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openPending("/simulator")}
+                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                  >
+                    <span>05. Swap Simulator</span>
+                    <span className="text-[9px] text-indigo-700 bg-indigo-50 px-1 rounded border border-indigo-200">
+                      Pending
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openPending("/approve")}
+                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                  >
+                    <span>06. Client Approval Portal</span>
+                    <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200">
+                      Pending
+                    </span>
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => openPending("/ledger")}
+                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                  >
+                    <span>07. Immutable Audit Ledger</span>
+                    <span className="text-[9px] text-slate-700 bg-slate-100 px-1 rounded border border-slate-200">
+                      Pending
+                    </span>
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            {/* Technical Specs */}
+            <div>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                Design &amp; Architecture
+              </h4>
+              <ul className="mt-3 space-y-2 text-xs">
+                <li>Next.js 15 App Router &amp; Turbopack</li>
+                <li>TypeScript Strict Domain Typing</li>
+                <li>Ledger Slate &amp; Trust Indigo Tokens</li>
+                <li>Supabase PostgreSQL &amp; SSR Auth</li>
+                <li>Tabular-nums Financial Precision</li>
+                <li className="pt-2 text-slate-400">
+                  Built for PU Digital Hackathon 2.0
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom bar */}
+          <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+            <p>
+              &copy; 2026 CSC Guardrail. Built by Member 2 for the CSC Hackathon Team.
             </p>
-            <div className="text-xs text-slate-400">
-              Agency Benchmark:{" "}
-              <strong className="text-slate-700 font-semibold">PixelCraft Studio</strong>
-              <span className="mx-2">&bull;</span>
-              Demo Client:{" "}
-              <strong className="text-slate-700 font-semibold">VastraKart Retail Pvt. Ltd.</strong>
+            <div className="flex items-center gap-2 text-slate-500">
+              <span>Trust Indigo &amp; Ledger Slate Design System</span>
             </div>
           </div>
-
-          {/* Workflow Links */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              Workflow Screens
-            </h4>
-            <ul className="mt-3 space-y-2 text-xs">
-              <li>
-                <Link href="/" className="hover:text-indigo-600 transition-colors">
-                  01. Product Landing
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-indigo-600 transition-colors">
-                  02. Agency Login &amp; Demo
-                </Link>
-              </li>
-              <li>
-                <Link href="/scanner" className="hover:text-indigo-600 transition-colors">
-                  03. SOW Ambiguity Scanner
-                </Link>
-              </li>
-              <li>
-                <Link href="/dashboard" className="hover:text-indigo-600 transition-colors">
-                  04. Scope Health Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link href="/simulator" className="hover:text-indigo-600 transition-colors">
-                  05. Drift &amp; Swap Simulator
-                </Link>
-              </li>
-              <li>
-                <Link href="/approve/demo-csc-892a" className="hover:text-indigo-600 transition-colors">
-                  06. Client Approval Portal
-                </Link>
-              </li>
-              <li>
-                <Link href="/ledger" className="hover:text-indigo-600 transition-colors">
-                  07. Immutable Audit Ledger
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Technical Specs */}
-          <div>
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-              Engine &amp; Design
-            </h4>
-            <ul className="mt-3 space-y-2 text-xs">
-              <li>Next.js 15 App Router &amp; Turbopack</li>
-              <li>TypeScript Strict Domain Typing</li>
-              <li>Tailwind CSS (Ledger Slate &amp; Trust Indigo)</li>
-              <li>Supabase PostgreSQL &amp; Deterministic Fallbacks</li>
-              <li>Tabular Numbers Financial Precision</li>
-              <li className="pt-2 text-slate-400">
-                Built for PU Digital Hackathon 2.0
-              </li>
-            </ul>
-          </div>
         </div>
+      </footer>
 
-        {/* Bottom bar */}
-        <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
-          <p>
-            &copy; 2026 CSC Guardrail. Built by Member 2 for the CSC Hackathon Team.
-          </p>
-          <div className="flex items-center gap-2">
-            <span>Designed in Trust Indigo &amp; Ledger Slate</span>
-          </div>
-        </div>
-      </div>
-    </footer>
+      {/* Pending Route Integration Modal */}
+      <PendingIntegrationModal
+        routeInfo={activeRoute}
+        onClose={closePending}
+      />
+    </>
   );
 }

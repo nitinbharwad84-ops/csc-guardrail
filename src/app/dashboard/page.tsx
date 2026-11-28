@@ -9,6 +9,7 @@ import { BudgetGauge } from "@/components/dashboard/BudgetGauge";
 import { ScopeSwapBanner } from "@/components/dashboard/ScopeSwapBanner";
 import { ScopeTable } from "@/components/dashboard/ScopeTable";
 import { DriftFeed } from "@/components/dashboard/DriftFeed";
+import { RelatedScreensPanel } from "@/components/dashboard/RelatedScreensPanel";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardLoadingAndError";
 import {
   VASTRAKART_PROJECT,
@@ -22,9 +23,9 @@ import { AlertCircle, Layers } from "lucide-react";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Scope Health Dashboard — CSC Guardrail",
+  title: "Scope Dashboard | CSC Guardrail",
   description:
-    "Live fixed-contract health dashboard tracking the ₹1,50,000 cap, 120 hr budget, swappable deliverables pool, and active drift alerts.",
+    "Live fixed-price contract scope health dashboard tracking the ₹1,50,000 cap, 120 hr budget, swappable deliverables pool, and active drift alerts.",
 };
 
 interface DashboardContentProps {
@@ -37,74 +38,35 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
 
   const cookieStore = await cookies();
   const demoBypassCookie = cookieStore.get("csc-demo-bypass")?.value === "true";
+  const isDemoMode = SERVER_DEMO_MODE || demoBypassCookie;
 
   let project: Project = VASTRAKART_PROJECT;
   let scopeItems: ScopeItem[] = VASTRAKART_SCOPE_ITEMS;
   let changeRequests: ChangeRequest[] = [VASTRAKART_ACTIVE_CHANGE_REQUEST];
-  const isDemoMode = SERVER_DEMO_MODE || demoBypassCookie;
 
-  // Handle test states for QA & edge-case verification
+  // Handle explicit QA test state (?state=error)
   if (stateParam === "error") {
     return (
-      <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
-        <div className="max-w-md w-full rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xs">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 mb-4">
-            <AlertCircle className="h-6 w-6" />
-          </div>
-          <h2 className="text-lg font-bold text-slate-900">
-            Unable to Load Contract Data
-          </h2>
-          <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-            A connection error occurred while querying the project database.
-            You can switch to isolated demo mode or retry.
-          </p>
-          <div className="mt-6 flex flex-col gap-2">
-            <Link
-              href="/dashboard"
-              className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
-            >
-              Reload Default Benchmark
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (stateParam === "empty") {
-    return (
-      <div className="flex-1 flex flex-col">
-        <DashboardHeader
-          project={{
-            ...VASTRAKART_PROJECT,
-            title: "Uninitialized Project Workspace",
-          }}
-          isDemoMode={isDemoMode}
-        />
-        <div className="p-6 lg:p-8 flex-1 flex items-center justify-center">
-          <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400 mb-4">
-              <Layers className="h-6 w-6" />
+      <div className="flex min-h-screen bg-slate-50 text-slate-900">
+        <DashboardSidebar isDemoMode={isDemoMode} />
+        <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
+          <div className="max-w-md w-full rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-xs">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 mb-4">
+              <AlertCircle className="h-6 w-6" />
             </div>
             <h2 className="text-lg font-bold text-slate-900">
-              No Scope Deliverables Recorded
+              Unable to Load Contract Data
             </h2>
             <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-              This project has not uploaded or scanned a Statement of Work yet.
-              Run the SOW Ambiguity Scanner to initialize deliverables.
+              A connection error occurred while querying the project database.
+              You can evaluate via the isolated demo workspace or retry.
             </p>
             <div className="mt-6 flex flex-col gap-2">
               <Link
-                href="/scanner"
-                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
-              >
-                Go to SOW Ambiguity Scanner
-              </Link>
-              <Link
                 href="/dashboard"
-                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
               >
-                View VastraKart Benchmark
+                Reload Default Benchmark
               </Link>
             </div>
           </div>
@@ -113,20 +75,57 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
     );
   }
 
-  // Attempt live Supabase query if credentials are active and not in demo mode
+  // Handle explicit QA test state (?state=empty)
+  if (stateParam === "empty") {
+    return (
+      <div className="flex min-h-screen bg-slate-50 text-slate-900">
+        <DashboardSidebar isDemoMode={isDemoMode} />
+        <div className="flex-1 flex flex-col">
+          <DashboardHeader
+            project={{
+              ...VASTRAKART_PROJECT,
+              title: "Uninitialized Project Workspace",
+            }}
+            isDemoMode={isDemoMode}
+          />
+          <div className="p-6 lg:p-8 flex-1 flex items-center justify-center">
+            <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400 mb-4">
+                <Layers className="h-6 w-6" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">
+                No Scope Deliverables Recorded
+              </h2>
+              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                This project has not uploaded or scanned a Statement of Work yet.
+                Run the SOW Ambiguity Scanner to initialize deliverables.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
+                >
+                  View VastraKart Benchmark
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Live Supabase check if credentials are active and NOT in demo mode
   if (!SERVER_DEMO_MODE && !demoBypassCookie) {
-    // --- Authorization check (outside try/catch so redirect() is not swallowed) ---
     const supabase = await createServerSupabaseClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      // Unauthorized access without login or demo cookie -> redirect to login
       redirect("/login?unauthorized=true");
     }
 
-    // --- Data fetching (inside try/catch for graceful degradation) ---
     try {
       const { data: projectData, error: projectError } = await supabase
         .from("projects")
@@ -157,30 +156,29 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
           changeRequests = crData as ChangeRequest[];
         }
       }
-      // If no project found, keep demo fixtures but mark live mode
-      // Do NOT silently fall back to demo data for authenticated users
     } catch {
-      // Network / query failure — show error state, do NOT silently switch to demo
       return (
-        <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
-          <div className="max-w-md w-full rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xs">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 mb-4">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-            <h2 className="text-lg font-bold text-slate-900">
-              Unable to Load Contract Data
-            </h2>
-            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
-              A database connection error occurred. Your session is valid but
-              project data could not be retrieved.
-            </p>
-            <div className="mt-6 flex flex-col gap-2">
-              <Link
-                href="/dashboard"
-                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
-              >
-                Retry
-              </Link>
+        <div className="flex min-h-screen bg-slate-50 text-slate-900">
+          <DashboardSidebar isDemoMode={isDemoMode} />
+          <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
+            <div className="max-w-md w-full rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-xs">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 mb-4">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">
+                Database Query Failure
+              </h2>
+              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                Your authenticated session is valid, but project records could not be fetched from Supabase.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <Link
+                  href="/dashboard"
+                  className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
+                >
+                  Retry Query
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -188,7 +186,7 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
     }
   }
 
-  // Mathematically verified calculations from SOW deliverables
+  // Contract calculation metrics
   const completedHours = scopeItems
     .filter((i) => i.status === "completed")
     .reduce((sum, i) => sum + i.hours, 0); // 16 hrs (Auth & Email Login)
@@ -200,8 +198,8 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
   const allocatedHours = completedHours + inProgressHours; // 54 hrs committed (45%)
   const remainingHours = Math.max(0, project.total_hours - allocatedHours); // 66 hrs uncommitted (55%)
 
-  // Precise financial valuations at ₹1,250/hr
-  const completedInr = completedHours * HOURLY_RATE_INR;   // ₹20,000 actual completed spend
+  // Milestone financial valuations at ₹1,250/hr
+  const completedInr = completedHours * HOURLY_RATE_INR;   // ₹20,000 completed deliverable value
   const inProgressInr = inProgressHours * HOURLY_RATE_INR; // ₹47,500 active in-progress allocation
 
   const swappableItems = scopeItems.filter((i) => i.is_swappable);
@@ -216,111 +214,66 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
   const activeDriftCostInr = changeRequests.reduce((sum, cr) => sum + cr.drift_cost_inr, 0); // ₹17,500
 
   return (
-    <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-      {/* Project Header Bar */}
-      <DashboardHeader project={project} isDemoMode={isDemoMode} />
+    <div className="flex min-h-screen bg-slate-50 text-slate-900">
+      {/* App Sidebar with Context-Aware Exit Button */}
+      <DashboardSidebar isDemoMode={isDemoMode} />
 
-      {/* Dashboard Body */}
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
-        {/* KPI Bento Grid (5 Cards: Cap, Hours, Pending Changes, Active Drift, Swappable Pool) */}
-        <KpiCards
-          budgetCap={project.budget_cap_inr}
-          totalHours={project.total_hours}
-          completedHours={completedHours}
-          inProgressHours={inProgressHours}
-          allocatedHours={allocatedHours}
-          remainingHours={remainingHours}
-          driftHours={activeDriftHours}
-          driftCostInr={activeDriftCostInr}
-          pendingRequestsCount={pendingRequestsCount}
-          swappableCount={swappableCount}
-          swappableHours={swappableHours}
-          marginProtectedInr={activeDriftCostInr}
-        />
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        {/* Project Header Bar */}
+        <DashboardHeader project={project} isDemoMode={isDemoMode} />
 
-        {/* Active Scope Swap Callout Banner */}
-        <ScopeSwapBanner
-          hash="#CSC-892A"
-          driftHours={activeDriftHours}
-          driftCostInr={activeDriftCostInr}
-          swappedItemTitle="Blog & Content CMS"
-          swappedHours={14}
-          netDeltaHours={0}
-          netDeltaCostInr={0}
-        />
+        {/* Dashboard Body */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+          {/* KPI Bento Grid */}
+          <KpiCards
+            budgetCap={project.budget_cap_inr}
+            totalHours={project.total_hours}
+            completedHours={completedHours}
+            inProgressHours={inProgressHours}
+            allocatedHours={allocatedHours}
+            remainingHours={remainingHours}
+            driftHours={activeDriftHours}
+            driftCostInr={activeDriftCostInr}
+            pendingRequestsCount={pendingRequestsCount}
+            swappableCount={swappableCount}
+            swappableHours={swappableHours}
+            marginProtectedInr={activeDriftCostInr}
+          />
 
-        {/* Budget Financial Gauge (Distinct Completed Spend vs In-Progress Allocation vs Headroom) */}
-        <BudgetGauge
-          completedInr={completedInr}
-          inProgressInr={inProgressInr}
-          budgetCapInr={project.budget_cap_inr}
-        />
+          {/* Active Scope Swap Proposal Banner */}
+          <ScopeSwapBanner
+            status="pending_approval"
+            hash="#CSC-892A"
+            driftHours={activeDriftHours}
+            driftCostInr={activeDriftCostInr}
+            swappedItemTitle="Blog & Content CMS"
+            swappedHours={14}
+            netDeltaHours={0}
+            netDeltaCostInr={0}
+          />
 
-        {/* Two-Column Grid: SOW Deliverables Table + Scope Drift Feed */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-          {/* SOW Deliverables Baseline Table (2 cols on xl) */}
-          <div className="xl:col-span-2">
-            <ScopeTable items={scopeItems} />
-          </div>
+          {/* Budget Financial Gauge */}
+          <BudgetGauge
+            completedInr={completedInr}
+            inProgressInr={inProgressInr}
+            budgetCapInr={project.budget_cap_inr}
+          />
 
-          {/* Drift Alert Feed (1 col on xl) */}
-          <div className="xl:col-span-1 space-y-4">
-            <DriftFeed changeRequests={changeRequests} />
+          {/* Two-Column Layout: Baseline Scope Table + Scope Drift Feed */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+            {/* SOW Deliverables Baseline Table (2 cols on xl) */}
+            <div className="xl:col-span-2">
+              <ScopeTable items={scopeItems} />
+            </div>
 
-            {/* Quick Navigation Panel */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 pb-2 border-b border-slate-100">
-                Related Screens
-              </h3>
-              <ul className="mt-3 space-y-2.5 text-xs">
-                <li>
-                  <Link
-                    href="/scanner"
-                    className="group flex items-center justify-between text-slate-600 hover:text-indigo-600 transition-colors"
-                  >
-                    <span>03. SOW Ambiguity Scanner</span>
-                    <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                      Day-0
-                    </span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/simulator"
-                    className="group flex items-center justify-between text-slate-600 hover:text-indigo-600 transition-colors"
-                  >
-                    <span>05. Drift &amp; Swap Simulator</span>
-                    <span className="text-[10px] text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">
-                      Engine
-                    </span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/approve/demo-csc-892a"
-                    className="group flex items-center justify-between text-slate-600 hover:text-indigo-600 transition-colors"
-                  >
-                    <span>06. Client Approval Portal</span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                      Sign-off
-                    </span>
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/ledger"
-                    className="group flex items-center justify-between text-slate-600 hover:text-indigo-600 transition-colors"
-                  >
-                    <span>07. Immutable Audit Ledger</span>
-                    <span className="text-[10px] text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                      PDF
-                    </span>
-                  </Link>
-                </li>
-              </ul>
+            {/* Scope Drift Feed + Related Screens (1 col on xl) */}
+            <div className="xl:col-span-1 space-y-4">
+              <DriftFeed changeRequests={changeRequests} />
+              <RelatedScreensPanel />
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );
@@ -328,20 +281,17 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
 
 export default function DashboardPage(props: DashboardContentProps) {
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {/* App Sidebar */}
-      <DashboardSidebar />
-
-      {/* Main Content with Suspense Boundary for Partial Prerendering */}
-      <Suspense
-        fallback={
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen bg-slate-50 text-slate-900">
+          <DashboardSidebar isDemoMode={true} />
           <div className="flex-1 p-6 lg:p-8">
             <DashboardSkeleton />
           </div>
-        }
-      >
-        <DashboardContent searchParams={props.searchParams} />
-      </Suspense>
-    </div>
+        </div>
+      }
+    >
+      <DashboardContent searchParams={props.searchParams} />
+    </Suspense>
   );
 }

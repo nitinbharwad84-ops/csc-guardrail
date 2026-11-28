@@ -1,9 +1,9 @@
 import React from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Info } from "lucide-react";
 import { DEMO_BUDGET_CAP_INR, HOURLY_RATE_INR } from "@/types/csc";
 
 interface BudgetGaugeProps {
-  completedInr?: number; // Actual completed deliverable spend (16 hrs = ₹20,000)
+  completedInr?: number; // Completed deliverable milestone value (16 hrs = ₹20,000)
   inProgressInr?: number; // Active in-progress allocation (38 hrs = ₹47,500)
   budgetCapInr?: number;  // Fixed ceiling (120 hrs = ₹1,50,000)
 }
@@ -25,41 +25,49 @@ export function BudgetGauge({
   const remainingPercent = (remainingInr / budgetCapInr) * 100;
 
   return (
-    <div className="card p-5 bg-white border border-slate-200">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+    <div className="rounded-xl p-5 bg-white border border-slate-200/90 shadow-2xs">
+      {/* Title & Rate Strip */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-2">
         <div className="flex items-center gap-2">
-          <div className="flex h-2 w-2 rounded-full bg-emerald-500" />
+          <div className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
-            Contract Financial Health &amp; Budget Progress
+            Contract Financial Health &amp; Scope Allocation
           </h3>
         </div>
         <div className="flex items-center gap-3 text-xs text-slate-500">
           <span>
-            Fixed Rate: <strong className="font-mono text-slate-800">₹{HOURLY_RATE_INR.toLocaleString("en-IN")}/hr</strong>
+            Contract Rate:{" "}
+            <strong className="font-mono text-slate-800">
+              ₹{HOURLY_RATE_INR.toLocaleString("en-IN")}/hr
+            </strong>
           </span>
-          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 font-semibold">
-            <CheckCircle2 className="h-3 w-3" />
-            <span>On Track (0% Breach)</span>
+          <span className="inline-flex items-center gap-1 text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 font-semibold text-[11px]">
+            <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+            <span>0% Cap Breach</span>
           </span>
         </div>
       </div>
 
       <div className="mt-4">
         {/* Progress summary labels */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-baseline text-xs mb-2.5 gap-1">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-baseline text-xs mb-2.5 gap-1.5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span>
               <strong className="text-slate-900 font-mono tabular-nums">
                 ₹{completedInr.toLocaleString("en-IN")}
               </strong>{" "}
-              <span className="text-slate-500">actual spent ({completedHours}h completed)</span>
+              <span className="text-slate-500">
+                completed valuation ({completedHours}h delivered)
+              </span>
             </span>
             <span className="text-slate-300">&bull;</span>
             <span>
               <strong className="text-indigo-700 font-mono tabular-nums">
                 ₹{inProgressInr.toLocaleString("en-IN")}
               </strong>{" "}
-              <span className="text-slate-500">in-progress ({inProgressHours}h active)</span>
+              <span className="text-slate-500">
+                in-progress allocation ({inProgressHours}h active)
+              </span>
             </span>
           </div>
 
@@ -67,7 +75,9 @@ export function BudgetGauge({
             <strong className="text-emerald-700 font-mono tabular-nums">
               ₹{remainingInr.toLocaleString("en-IN")}
             </strong>{" "}
-            <span className="text-slate-500">uncommitted headroom ({remainingHours}h)</span>
+            <span className="text-slate-500">
+              uncommitted scope headroom ({remainingHours}h)
+            </span>
           </div>
         </div>
 
@@ -78,15 +88,15 @@ export function BudgetGauge({
           aria-valuenow={Math.round((allocatedInr / budgetCapInr) * 100)}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label="Contract Budget Progress Breakdown"
+          aria-label="Contract Scope and Budget Allocation Breakdown"
         >
-          {/* Segment 1: Completed / Incurred Spend */}
+          {/* Segment 1: Completed Deliverable Valuation */}
           <div
             className="h-full bg-indigo-700 rounded-l-full transition-all duration-500"
             style={{ width: `${completedPercent}%` }}
-            title={`Completed spend: ₹${completedInr.toLocaleString("en-IN")} (${completedHours} hrs)`}
+            title={`Completed milestone valuation: ₹${completedInr.toLocaleString("en-IN")} (${completedHours} hrs)`}
           />
-          {/* Segment 2: In-Progress Allocated */}
+          {/* Segment 2: In-Progress Scope Allocation */}
           <div
             className="h-full bg-indigo-400 transition-all duration-500"
             style={{ width: `${inProgressPercent}%` }}
@@ -96,16 +106,16 @@ export function BudgetGauge({
           <div
             className="h-full bg-emerald-400 rounded-r-full transition-all duration-500"
             style={{ width: `${remainingPercent}%` }}
-            title={`Remaining headroom: ₹${remainingInr.toLocaleString("en-IN")} (${remainingHours} hrs)`}
+            title={`Uncommitted headroom: ₹${remainingInr.toLocaleString("en-IN")} (${remainingHours} hrs)`}
           />
         </div>
 
-        {/* Legend */}
-        <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-y-1.5 pt-1">
+        {/* Legend & Clarifications */}
+        <div className="mt-3 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-y-1.5 pt-1 border-t border-slate-100">
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-indigo-700" />
-              <span>Actual Completed Spend (₹{completedInr.toLocaleString("en-IN")})</span>
+              <span>Completed Valuation (₹{completedInr.toLocaleString("en-IN")})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-indigo-400" />
@@ -113,14 +123,22 @@ export function BudgetGauge({
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>Available Headroom (₹{remainingInr.toLocaleString("en-IN")})</span>
+              <span>Uncommitted Headroom (₹{remainingInr.toLocaleString("en-IN")})</span>
             </div>
           </div>
 
           <div className="font-mono text-slate-700 font-medium tabular-nums">
-            Fixed Ceiling: ₹{budgetCapInr.toLocaleString("en-IN")} (120 hrs)
+            Total Contract Ceiling: ₹{budgetCapInr.toLocaleString("en-IN")} (120 hrs)
           </div>
         </div>
+
+        {/* Financial Governance Disclaimer */}
+        <p className="mt-2 text-[10px] text-slate-400 flex items-center gap-1">
+          <Info className="h-3 w-3 shrink-0" />
+          <span>
+            Note: Figures represent contractual delivery milestone valuations based on SOW hours at ₹1,250/hr, not actual cash disbursements.
+          </span>
+        </p>
       </div>
     </div>
   );
