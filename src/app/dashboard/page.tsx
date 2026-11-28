@@ -41,7 +41,7 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
   let project: Project = VASTRAKART_PROJECT;
   let scopeItems: ScopeItem[] = VASTRAKART_SCOPE_ITEMS;
   let changeRequests: ChangeRequest[] = [VASTRAKART_ACTIVE_CHANGE_REQUEST];
-  let isDemoMode = SERVER_DEMO_MODE || demoBypassCookie;
+  const isDemoMode = SERVER_DEMO_MODE || demoBypassCookie;
 
   // Handle test states for QA & edge-case verification
   if (stateParam === "error") {
@@ -115,18 +115,19 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
 
   // Attempt live Supabase query if credentials are active and not in demo mode
   if (!SERVER_DEMO_MODE && !demoBypassCookie) {
+    // --- Authorization check (outside try/catch so redirect() is not swallowed) ---
+    const supabase = await createServerSupabaseClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      // Unauthorized access without login or demo cookie -> redirect to login
+      redirect("/login?unauthorized=true");
+    }
+
+    // --- Data fetching (inside try/catch for graceful degradation) ---
     try {
-      const supabase = await createServerSupabaseClient();
-      // Check session
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        // Unauthorized access without login or demo cookie -> redirect to login
-        redirect("/login?unauthorized=true");
-      }
-
       const { data: projectData, error: projectError } = await supabase
         .from("projects")
         .select("*")
@@ -155,12 +156,35 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
         if (crData && crData.length > 0) {
           changeRequests = crData as ChangeRequest[];
         }
-      } else {
-        isDemoMode = true;
       }
+      // If no project found, keep demo fixtures but mark live mode
+      // Do NOT silently fall back to demo data for authenticated users
     } catch {
-      // Graceful fallback to static demo fixtures on network/env failure
-      isDemoMode = true;
+      // Network / query failure — show error state, do NOT silently switch to demo
+      return (
+        <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
+          <div className="max-w-md w-full rounded-2xl border border-red-200 bg-white p-8 text-center shadow-xs">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 mb-4">
+              <AlertCircle className="h-6 w-6" />
+            </div>
+            <h2 className="text-lg font-bold text-slate-900">
+              Unable to Load Contract Data
+            </h2>
+            <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+              A database connection error occurred. Your session is valid but
+              project data could not be retrieved.
+            </p>
+            <div className="mt-6 flex flex-col gap-2">
+              <Link
+                href="/dashboard"
+                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700"
+              >
+                Retry
+              </Link>
+            </div>
+          </div>
+        </div>
+      );
     }
   }
 
