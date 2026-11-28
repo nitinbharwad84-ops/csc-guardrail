@@ -25,7 +25,12 @@ function isAllowedRedirect(path: string): boolean {
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams, protocol } = new URL(request.url);
+  const host =
+    request.headers.get("x-forwarded-host") || request.headers.get("host");
+  const proto =
+    request.headers.get("x-forwarded-proto") || protocol.replace(":", "");
+  const origin = host ? `${proto}://${host}` : new URL(request.url).origin;
   const code = searchParams.get("code");
   const type = searchParams.get("type");
   const errorParam = searchParams.get("error");

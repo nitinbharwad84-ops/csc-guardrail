@@ -1,19 +1,67 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Search,
   Sliders,
   CheckSquare,
   FileSpreadsheet,
   Clock,
+  ArrowRight,
 } from "lucide-react";
 import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY, type ScreenKey } from "@/components/dashboard/routeAvailability";
 
-export function RelatedScreensPanel() {
+interface RelatedItem {
+  key: ScreenKey;
+  label: string;
+  trackLabel: string;
+  badgeStyle: string;
+  icon: React.ElementType;
+}
+
+const RELATED_ITEMS: RelatedItem[] = [
+  {
+    key: "scanner",
+    label: "03. SOW Ambiguity Scanner",
+    trackLabel: "Track 4",
+    badgeStyle: "text-amber-800 bg-amber-50 border-amber-200",
+    icon: Search,
+  },
+  {
+    key: "simulator",
+    label: "05. Drift & Swap Simulator",
+    trackLabel: "Track 4",
+    badgeStyle: "text-indigo-800 bg-indigo-50 border-indigo-200",
+    icon: Sliders,
+  },
+  {
+    key: "approve",
+    label: "06. Client Approval Portal",
+    trackLabel: "Track 3",
+    badgeStyle: "text-emerald-800 bg-emerald-50 border-emerald-200",
+    icon: CheckSquare,
+  },
+  {
+    key: "ledger",
+    label: "07. Immutable Audit Ledger",
+    trackLabel: "Track 3",
+    badgeStyle: "text-slate-700 bg-slate-100 border-slate-200",
+    icon: FileSpreadsheet,
+  },
+];
+
+export function RelatedScreensPanel({
+  projectId,
+  approvalToken = "demo-csc-892a",
+}: {
+  projectId?: string;
+  approvalToken?: string;
+}) {
   const { activeRoute, openPending, closePending } = usePendingIntegration();
 
   return (
@@ -23,77 +71,52 @@ export function RelatedScreensPanel() {
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900">
             Workflow Tracks
           </h3>
-          <span className="text-[10px] text-slate-500 font-medium">7-Screen Architecture</span>
+          <span className="text-[10px] text-slate-500 font-medium">
+            7-Screen Architecture
+          </span>
         </div>
 
         <ul className="mt-3 space-y-2 text-xs">
-          <li>
-            <button
-              type="button"
-              onClick={() => openPending("/scanner")}
-              className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <Search className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                <span>03. SOW Ambiguity Scanner</span>
-              </div>
-              <span className="text-[10px] font-semibold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 flex items-center gap-0.5">
-                <Clock className="h-2.5 w-2.5 text-amber-600" />
-                <span>Track 1</span>
-              </span>
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              onClick={() => openPending("/simulator")}
-              className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <Sliders className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                <span>05. Drift &amp; Swap Simulator</span>
-              </div>
-              <span className="text-[10px] font-semibold text-indigo-800 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200 flex items-center gap-0.5">
-                <Clock className="h-2.5 w-2.5 text-indigo-600" />
-                <span>Track 3</span>
-              </span>
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              onClick={() => openPending("/approve")}
-              className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <CheckSquare className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                <span>06. Client Approval Portal</span>
-              </div>
-              <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 flex items-center gap-0.5">
-                <Clock className="h-2.5 w-2.5 text-emerald-600" />
-                <span>Track 4</span>
-              </span>
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              onClick={() => openPending("/ledger")}
-              className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1 text-left"
-            >
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
-                <span>07. Immutable Audit Ledger</span>
-              </div>
-              <span className="text-[10px] font-semibold text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 flex items-center gap-0.5">
-                <Clock className="h-2.5 w-2.5 text-slate-500" />
-                <span>Track 5</span>
-              </span>
-            </button>
-          </li>
+          {RELATED_ITEMS.map((item) => {
+            const config = ROUTE_REGISTRY[item.key];
+            const Icon = item.icon;
+            if (config.isImplemented) {
+              return (
+                <li key={item.key}>
+                  <Link
+                    href={config.buildHref({ projectId, approvalToken })}
+                    className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                      <span>{item.label}</span>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-indigo-600" />
+                  </Link>
+                </li>
+              );
+            }
+            return (
+              <li key={item.key}>
+                <button
+                  type="button"
+                  onClick={() => openPending(item.key)}
+                  className="group flex items-center justify-between w-full text-slate-600 hover:text-indigo-600 transition-colors py-1 text-left"
+                >
+                  <div className="flex items-center gap-2">
+                    <Icon className="h-3.5 w-3.5 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                    <span>{item.label}</span>
+                  </div>
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border flex items-center gap-0.5 ${item.badgeStyle}`}
+                  >
+                    <Clock className="h-2.5 w-2.5" />
+                    <span>{item.trackLabel}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </div>
 

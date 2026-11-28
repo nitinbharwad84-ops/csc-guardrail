@@ -38,6 +38,16 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
 
   const cookieStore = await cookies();
   const demoBypassCookie = cookieStore.get("csc-demo-bypass")?.value === "true";
+
+  // Authorization Guard:
+  // - In offline/demo mode (SERVER_DEMO_MODE), require an explicit active demo session cookie
+  //   so exiting demo mode prevents browser back navigation or direct access from restoring it.
+  // - In live Supabase mode (!SERVER_DEMO_MODE), require either a demo cookie (isolated demo)
+  //   or an authenticated Supabase user (verified below outside try/catch).
+  if (SERVER_DEMO_MODE && !demoBypassCookie && !stateParam) {
+    redirect("/login?unauthorized=true");
+  }
+
   const isDemoMode = SERVER_DEMO_MODE || demoBypassCookie;
 
   let project: Project = VASTRAKART_PROJECT;
@@ -62,12 +72,12 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
               You can evaluate via the isolated demo workspace or retry.
             </p>
             <div className="mt-6 flex flex-col gap-2">
-              <Link
-                href="/dashboard"
+              <a
+                href="/login/demo"
                 className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
               >
                 Reload Default Benchmark
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -101,12 +111,12 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
                 Run the SOW Ambiguity Scanner to initialize deliverables.
               </p>
               <div className="mt-6 flex flex-col gap-2">
-                <Link
-                  href="/dashboard"
+                <a
+                  href="/login/demo"
                   className="rounded-lg bg-indigo-600 px-4 py-2.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors"
                 >
                   View VastraKart Benchmark
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -115,7 +125,7 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
     );
   }
 
-  // Live Supabase check if credentials are active and NOT in demo mode
+  // Live Supabase check when credentials are active and NOT in isolated demo mode
   if (!SERVER_DEMO_MODE && !demoBypassCookie) {
     const supabase = await createServerSupabaseClient();
     const {
@@ -125,6 +135,8 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
     if (!user) {
       redirect("/login?unauthorized=true");
     }
+
+    let liveFetchStatus: "ok" | "no_projects" | "db_error" = "ok";
 
     try {
       const { data: projectData, error: projectError } = await supabase
@@ -155,11 +167,46 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
         if (crData && crData.length > 0) {
           changeRequests = crData as ChangeRequest[];
         }
+      } else {
+        liveFetchStatus = "no_projects";
       }
     } catch {
+      liveFetchStatus = "db_error";
+    }
+
+    if (liveFetchStatus === "no_projects") {
       return (
         <div className="flex min-h-screen bg-slate-50 text-slate-900">
-          <DashboardSidebar isDemoMode={isDemoMode} />
+          <DashboardSidebar isDemoMode={false} />
+          <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
+            <div className="max-w-md w-full rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-xs">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-500 mb-4">
+                <Layers className="h-6 w-6" />
+              </div>
+              <h2 className="text-lg font-bold text-slate-900">
+                No Authorized Workspace Projects Found
+              </h2>
+              <p className="mt-2 text-xs text-slate-600 leading-relaxed">
+                Your account is authenticated, but no agency projects are linked to your workspace yet.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <Link
+                  href="/login"
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Return to Sign In
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (liveFetchStatus === "db_error") {
+      return (
+        <div className="flex min-h-screen bg-slate-50 text-slate-900">
+          <DashboardSidebar isDemoMode={false} />
           <div className="flex-1 p-6 lg:p-8 flex items-center justify-center">
             <div className="max-w-md w-full rounded-2xl border border-rose-200 bg-white p-8 text-center shadow-xs">
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 mb-4">
@@ -189,43 +236,55 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
   // Contract calculation metrics
   const completedHours = scopeItems
     .filter((i) => i.status === "completed")
-    .reduce((sum, i) => sum + i.hours, 0); // 16 hrs (Auth & Email Login)
+    .reduce((sum, i) => sum + i.hours, 0);
 
   const inProgressHours = scopeItems
     .filter((i) => i.status === "in_progress")
-    .reduce((sum, i) => sum + i.hours, 0); // 38 hrs (Catalogue 20h + Cart 18h)
+    .reduce((sum, i) => sum + i.hours, 0);
 
-  const allocatedHours = completedHours + inProgressHours; // 54 hrs committed (45%)
-  const remainingHours = Math.max(0, project.total_hours - allocatedHours); // 66 hrs uncommitted (55%)
+  const allocatedHours = completedHours + inProgressHours;
+  const remainingHours = Math.max(0, project.total_hours - allocatedHours);
 
-  // Milestone financial valuations at ₹1,250/hr
-  const completedInr = completedHours * HOURLY_RATE_INR;   // ₹20,000 completed deliverable value
-  const inProgressInr = inProgressHours * HOURLY_RATE_INR; // ₹47,500 active in-progress allocation
+  const completedInr = completedHours * HOURLY_RATE_INR;
+  const inProgressInr = inProgressHours * HOURLY_RATE_INR;
 
   const swappableItems = scopeItems.filter((i) => i.is_swappable);
-  const swappableCount = swappableItems.length; // 3 items (Push 10h, Wishlist 12h, Blog CMS 14h)
-  const swappableHours = swappableItems.reduce((sum, i) => sum + i.hours, 0); // 36 hrs
+  const swappableCount = swappableItems.length;
+  const swappableHours = swappableItems.reduce((sum, i) => sum + i.hours, 0);
 
-  // Change requests metrics
-  const pendingRequests = changeRequests.filter((cr) => cr.approval_status === "pending");
-  const pendingRequestsCount = pendingRequests.length; // 1 Pending (#CSC-892A)
+  const pendingRequests = changeRequests.filter(
+    (cr) => cr.approval_status === "pending"
+  );
+  const pendingRequestsCount = pendingRequests.length;
 
-  const activeDriftHours = changeRequests.reduce((sum, cr) => sum + cr.drift_hours, 0); // 14 hrs
-  const activeDriftCostInr = changeRequests.reduce((sum, cr) => sum + cr.drift_cost_inr, 0); // ₹17,500
+  const activeDriftHours = changeRequests.reduce(
+    (sum, cr) => sum + cr.drift_hours,
+    0
+  );
+  const activeDriftCostInr = changeRequests.reduce(
+    (sum, cr) => sum + cr.drift_cost_inr,
+    0
+  );
+
+  const approvalToken =
+    changeRequests[0]?.approval_token || "demo-csc-892a";
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900">
-      {/* App Sidebar with Context-Aware Exit Button */}
-      <DashboardSidebar isDemoMode={isDemoMode} />
+      <DashboardSidebar
+        isDemoMode={isDemoMode}
+        projectId={project.id}
+        approvalToken={approvalToken}
+      />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Project Header Bar */}
-        <DashboardHeader project={project} isDemoMode={isDemoMode} />
+        <DashboardHeader
+          project={project}
+          isDemoMode={isDemoMode}
+          approvalToken={approvalToken}
+        />
 
-        {/* Dashboard Body */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
-          {/* KPI Bento Grid */}
           <KpiCards
             budgetCap={project.budget_cap_inr}
             totalHours={project.total_hours}
@@ -241,7 +300,6 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
             marginProtectedInr={activeDriftCostInr}
           />
 
-          {/* Active Scope Swap Proposal Banner */}
           <ScopeSwapBanner
             status="pending_approval"
             hash="#CSC-892A"
@@ -251,26 +309,30 @@ async function DashboardContent({ searchParams }: DashboardContentProps) {
             swappedHours={14}
             netDeltaHours={0}
             netDeltaCostInr={0}
+            projectId={project.id}
+            approvalToken={approvalToken}
           />
 
-          {/* Budget Financial Gauge */}
           <BudgetGauge
             completedInr={completedInr}
             inProgressInr={inProgressInr}
             budgetCapInr={project.budget_cap_inr}
           />
 
-          {/* Two-Column Layout: Baseline Scope Table + Scope Drift Feed */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            {/* SOW Deliverables Baseline Table (2 cols on xl) */}
             <div className="xl:col-span-2">
               <ScopeTable items={scopeItems} />
             </div>
 
-            {/* Scope Drift Feed + Related Screens (1 col on xl) */}
             <div className="xl:col-span-1 space-y-4">
-              <DriftFeed changeRequests={changeRequests} />
-              <RelatedScreensPanel />
+              <DriftFeed
+                changeRequests={changeRequests}
+                projectId={project.id}
+              />
+              <RelatedScreensPanel
+                projectId={project.id}
+                approvalToken={approvalToken}
+              />
             </div>
           </div>
         </main>

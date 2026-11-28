@@ -14,20 +14,18 @@ import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY } from "@/components/dashboard/routeAvailability";
 
 export function ScenarioCallout() {
   const { activeRoute, openPending, closePending } = usePendingIntegration();
-
-  const handleDemoBypass = () => {
-    if (typeof document !== "undefined") {
-      document.cookie =
-        "csc-demo-bypass=true; path=/; max-age=86400; SameSite=Lax";
-    }
-  };
+  const approveConfig = ROUTE_REGISTRY.approve;
 
   return (
     <>
-      <section className="py-16 md:py-24 bg-white border-b border-slate-200">
+      <section
+        id="scenario"
+        className="scroll-mt-20 py-16 md:py-24 bg-white border-b border-slate-200"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             {/* Left Narrative */}
@@ -89,23 +87,32 @@ export function ScenarioCallout() {
               </div>
 
               <div className="mt-8 flex flex-wrap items-center gap-4">
-                <Link
-                  href="/dashboard"
-                  onClick={handleDemoBypass}
+                <a
+                  href="/login/demo"
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
                 >
                   <span>Explore in Scope Dashboard</span>
                   <ArrowRight className="h-4 w-4" />
-                </Link>
+                </a>
 
-                <button
-                  type="button"
-                  onClick={() => openPending("/approve")}
-                  className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  <FileCheck2 className="h-4 w-4 text-slate-500" />
-                  <span>View Client Sign-Off Portal Info</span>
-                </button>
+                {approveConfig.isImplemented ? (
+                  <Link
+                    href={approveConfig.buildHref({ approvalToken: "demo-csc-892a" })}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <FileCheck2 className="h-4 w-4 text-slate-500" />
+                    <span>Open Client Sign-Off Portal</span>
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => openPending("approve")}
+                    className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <FileCheck2 className="h-4 w-4 text-slate-500" />
+                    <span>View Client Sign-Off Portal Info</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -163,7 +170,6 @@ export function ScenarioCallout() {
         </div>
       </section>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}

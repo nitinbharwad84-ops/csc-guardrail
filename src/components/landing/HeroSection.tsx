@@ -5,15 +5,8 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Sparkles, CheckCircle2, TrendingUp, Clock, Scale } from "lucide-react";
 
 export function HeroSection() {
-  const handleDemoBypass = () => {
-    if (typeof document !== "undefined") {
-      document.cookie = "csc-demo-bypass=true; path=/; max-age=86400; SameSite=Lax";
-    }
-  };
-
   return (
     <section className="relative overflow-hidden pt-12 pb-16 md:pt-20 md:pb-24 border-b border-slate-200 bg-linear-to-b from-white via-slate-50/50 to-slate-50">
-      {/* Subtle background grid pattern */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -27,19 +20,16 @@ export function HeroSection() {
 
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
-          {/* Tag Pill */}
           <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50/80 px-3.5 py-1 text-xs font-semibold text-indigo-700 shadow-xs mb-6 backdrop-blur-xs">
             <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
             <span>Two-Layer Scope Defense for Fixed-Price Agency Projects</span>
           </div>
 
-          {/* Hero H1 */}
           <h1 className="font-sans text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-[-0.02em] text-slate-900 leading-[1.12]">
             Stop Scope Creep <br className="hidden sm:inline" />
-            <span className="text-indigo-600">Before & During</span> the Sprint.
+            <span className="text-indigo-600">Before &amp; During</span> the Sprint.
           </h1>
 
-          {/* Sub-headline */}
           <p className="mt-6 text-lg sm:text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
             CSC Guardrail protects your agency’s fixed contracts with a continuous Two-Layer Defense:
             catch ambiguous contract deliverables at <strong>Day-0</strong>, and resolve mid-sprint
@@ -48,15 +38,14 @@ export function HeroSection() {
 
           {/* Primary Action Buttons */}
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/dashboard"
-              onClick={handleDemoBypass}
+            <a
+              href="/login/demo"
               className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2"
             >
               <Sparkles className="h-5 w-5" aria-hidden="true" />
               <span>Try Live Demo</span>
               <ArrowRight className="h-5 w-5" aria-hidden="true" />
-            </Link>
+            </a>
             <Link
               href="/login"
               className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 hover:border-slate-400 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"

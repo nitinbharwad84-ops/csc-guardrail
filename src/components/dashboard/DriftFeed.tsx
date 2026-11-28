@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   TrendingUp,
   ArrowRight,
@@ -13,13 +14,17 @@ import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY } from "@/components/dashboard/routeAvailability";
 
 interface DriftFeedProps {
   changeRequests?: ChangeRequest[];
+  projectId?: string;
 }
 
-export function DriftFeed({ changeRequests = [] }: DriftFeedProps) {
+export function DriftFeed({ changeRequests = [], projectId }: DriftFeedProps) {
   const { activeRoute, openPending, closePending } = usePendingIntegration();
+  const simulatorConfig = ROUTE_REGISTRY.simulator;
+  const approveConfig = ROUTE_REGISTRY.approve;
 
   return (
     <>
@@ -31,15 +36,25 @@ export function DriftFeed({ changeRequests = [] }: DriftFeedProps) {
               Scope Drift &amp; Change Request Feed
             </h3>
           </div>
-          <button
-            type="button"
-            onClick={() => openPending("/simulator")}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-            title="Simulate scope swaps in Track 3 engine"
-          >
-            <span>Simulator</span>
-            <ArrowRight className="h-3 w-3" />
-          </button>
+          {simulatorConfig.isImplemented ? (
+            <Link
+              href={simulatorConfig.buildHref({ projectId })}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+            >
+              <span>Simulator</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openPending("simulator")}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+              title="Simulate scope swaps in Track 4 engine"
+            >
+              <span>Simulator</span>
+              <ArrowRight className="h-3 w-3" />
+            </button>
+          )}
         </div>
 
         <div className="mt-4 space-y-3">
@@ -87,25 +102,47 @@ export function DriftFeed({ changeRequests = [] }: DriftFeedProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => openPending("/simulator")}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 px-2 py-1 rounded-md hover:bg-slate-50 shadow-2xs"
-                      title="Open in Simulator"
-                    >
-                      <Sliders className="h-3 w-3 text-indigo-600" />
-                      <span>Simulate</span>
-                    </button>
+                    {simulatorConfig.isImplemented ? (
+                      <Link
+                        href={simulatorConfig.buildHref({ projectId: cr.project_id })}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 px-2 py-1 rounded-md hover:bg-slate-50 shadow-2xs"
+                      >
+                        <Sliders className="h-3 w-3 text-indigo-600" />
+                        <span>Simulate</span>
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openPending("simulator")}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-slate-700 bg-white border border-slate-200 px-2 py-1 rounded-md hover:bg-slate-50 shadow-2xs"
+                        title="Open in Simulator"
+                      >
+                        <Sliders className="h-3 w-3 text-indigo-600" />
+                        <span>Simulate</span>
+                      </button>
+                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => openPending("/approve")}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shadow-2xs"
-                      title="View Client Sign-off Sheet"
-                    >
-                      <span>Sign-off</span>
-                      <ExternalLink className="h-3 w-3 text-emerald-700" />
-                    </button>
+                    {approveConfig.isImplemented ? (
+                      <Link
+                        href={approveConfig.buildHref({
+                          approvalToken: cr.approval_token || "demo-csc-892a",
+                        })}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shadow-2xs"
+                      >
+                        <span>Sign-off</span>
+                        <ExternalLink className="h-3 w-3 text-emerald-700" />
+                      </Link>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openPending("approve")}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors shadow-2xs"
+                        title="View Client Sign-off Sheet"
+                      >
+                        <span>Sign-off</span>
+                        <ExternalLink className="h-3 w-3 text-emerald-700" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -118,7 +155,6 @@ export function DriftFeed({ changeRequests = [] }: DriftFeedProps) {
         </div>
       </div>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}

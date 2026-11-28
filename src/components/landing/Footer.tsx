@@ -7,6 +7,7 @@ import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY } from "@/components/dashboard/routeAvailability";
 
 export function Footer() {
   const { activeRoute, openPending, closePending } = usePendingIntegration();
@@ -16,7 +17,6 @@ export function Footer() {
       <footer className="border-t border-slate-200 bg-white py-12 text-slate-600">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Brand column */}
             <div className="md:col-span-2 space-y-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-xs">
@@ -34,7 +34,6 @@ export function Footer() {
               </div>
             </div>
 
-            {/* 7-Screen System Navigation */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                 System Workflow
@@ -51,68 +50,103 @@ export function Footer() {
                   </Link>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openPending("/scanner")}
-                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
-                  >
-                    <span>03. SOW Scanner</span>
-                    <span className="text-[9px] text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">
-                      Pending
-                    </span>
-                  </button>
+                  {ROUTE_REGISTRY.scanner.isImplemented ? (
+                    <Link
+                      href={ROUTE_REGISTRY.scanner.buildHref()}
+                      className="hover:text-indigo-600 transition-colors"
+                    >
+                      03. SOW Scanner
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPending("scanner")}
+                      className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                    >
+                      <span>03. SOW Scanner</span>
+                      <span className="text-[9px] text-amber-700 bg-amber-50 px-1 rounded border border-amber-200">
+                        Pending
+                      </span>
+                    </button>
+                  )}
                 </li>
                 <li>
-                  <Link href="/dashboard" className="hover:text-indigo-600 transition-colors">
+                  <a href="/login/demo" className="hover:text-indigo-600 transition-colors">
                     04. Scope Health Dashboard
-                  </Link>
+                  </a>
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openPending("/simulator")}
-                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
-                  >
-                    <span>05. Swap Simulator</span>
-                    <span className="text-[9px] text-indigo-700 bg-indigo-50 px-1 rounded border border-indigo-200">
-                      Pending
-                    </span>
-                  </button>
+                  {ROUTE_REGISTRY.simulator.isImplemented ? (
+                    <Link
+                      href={ROUTE_REGISTRY.simulator.buildHref()}
+                      className="hover:text-indigo-600 transition-colors"
+                    >
+                      05. Swap Simulator
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPending("simulator")}
+                      className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                    >
+                      <span>05. Swap Simulator</span>
+                      <span className="text-[9px] text-indigo-700 bg-indigo-50 px-1 rounded border border-indigo-200">
+                        Pending
+                      </span>
+                    </button>
+                  )}
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openPending("/approve")}
-                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
-                  >
-                    <span>06. Client Approval Portal</span>
-                    <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200">
-                      Pending
-                    </span>
-                  </button>
+                  {ROUTE_REGISTRY.approve.isImplemented ? (
+                    <Link
+                      href={ROUTE_REGISTRY.approve.buildHref({ approvalToken: "demo-csc-892a" })}
+                      className="hover:text-indigo-600 transition-colors"
+                    >
+                      06. Client Approval Portal
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPending("approve")}
+                      className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                    >
+                      <span>06. Client Approval Portal</span>
+                      <span className="text-[9px] text-emerald-700 bg-emerald-50 px-1 rounded border border-emerald-200">
+                        Pending
+                      </span>
+                    </button>
+                  )}
                 </li>
                 <li>
-                  <button
-                    type="button"
-                    onClick={() => openPending("/ledger")}
-                    className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
-                  >
-                    <span>07. Immutable Audit Ledger</span>
-                    <span className="text-[9px] text-slate-700 bg-slate-100 px-1 rounded border border-slate-200">
-                      Pending
-                    </span>
-                  </button>
+                  {ROUTE_REGISTRY.ledger.isImplemented ? (
+                    <Link
+                      href={ROUTE_REGISTRY.ledger.buildHref()}
+                      className="hover:text-indigo-600 transition-colors"
+                    >
+                      07. Immutable Audit Ledger
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openPending("ledger")}
+                      className="hover:text-indigo-600 transition-colors text-left flex items-center gap-1 text-slate-500"
+                    >
+                      <span>07. Immutable Audit Ledger</span>
+                      <span className="text-[9px] text-slate-700 bg-slate-100 px-1 rounded border border-slate-200">
+                        Pending
+                      </span>
+                    </button>
+                  )}
                 </li>
               </ul>
             </div>
 
-            {/* Technical Specs */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
                 Design &amp; Architecture
               </h4>
               <ul className="mt-3 space-y-2 text-xs">
-                <li>Next.js 15 App Router &amp; Turbopack</li>
+                <li>Next.js App Router &amp; Turbopack</li>
                 <li>TypeScript Strict Domain Typing</li>
                 <li>Ledger Slate &amp; Trust Indigo Tokens</li>
                 <li>Supabase PostgreSQL &amp; SSR Auth</li>
@@ -124,7 +158,6 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Bottom bar */}
           <div className="mt-8 pt-8 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
             <p>
               &copy; 2026 CSC Guardrail. Built by Member 2 for the CSC Hackathon Team.
@@ -136,7 +169,6 @@ export function Footer() {
         </div>
       </footer>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}

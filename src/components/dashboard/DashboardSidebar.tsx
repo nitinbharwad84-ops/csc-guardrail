@@ -15,19 +15,20 @@ import {
   X,
   LogOut,
   Clock,
+  Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY, type ScreenKey } from "@/components/dashboard/routeAvailability";
 
 interface NavItemConfig {
   name: string;
-  href: string;
+  key: ScreenKey;
   icon: React.ElementType;
-  isImplemented: boolean;
-  pendingOwner?: string;
 }
 
 interface NavSectionConfig {
@@ -41,9 +42,8 @@ const NAV_SECTIONS: NavSectionConfig[] = [
     items: [
       {
         name: "Overview / Scope Dashboard",
-        href: "/dashboard",
+        key: "dashboard",
         icon: LayoutDashboard,
-        isImplemented: true,
       },
     ],
   },
@@ -52,17 +52,13 @@ const NAV_SECTIONS: NavSectionConfig[] = [
     items: [
       {
         name: "SOW Scanner",
-        href: "/scanner",
+        key: "scanner",
         icon: Search,
-        isImplemented: false,
-        pendingOwner: "Member 3 (Track 1)",
       },
       {
         name: "Guardrail Simulator",
-        href: "/simulator",
+        key: "simulator",
         icon: Sliders,
-        isImplemented: false,
-        pendingOwner: "Member 4 (Track 3)",
       },
     ],
   },
@@ -71,17 +67,13 @@ const NAV_SECTIONS: NavSectionConfig[] = [
     items: [
       {
         name: "Client Portal",
-        href: "/approve",
+        key: "approve",
         icon: CheckSquare,
-        isImplemented: false,
-        pendingOwner: "Member 4 (Track 4)",
       },
       {
         name: "Audit Ledger",
-        href: "/ledger",
+        key: "ledger",
         icon: FileSpreadsheet,
-        isImplemented: false,
-        pendingOwner: "Member 5 (Track 5)",
       },
     ],
   },
@@ -89,32 +81,76 @@ const NAV_SECTIONS: NavSectionConfig[] = [
 
 interface DashboardSidebarProps {
   isDemoMode?: boolean;
+  projectId?: string;
+  approvalToken?: string;
 }
 
-export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) {
+export function DashboardSidebar({
+  isDemoMode = false,
+  projectId,
+  approvalToken,
+}: DashboardSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const inDemo = isDemoMode;
+  const [exiting, setExiting] = useState(false);
+  const [exitError, setExitError] = useState<string | null>(null);
   const { activeRoute, openPending, closePending } = usePendingIntegration();
 
-  const handleSignOut = async () => {
-    // 1. Clear demo bypass cookie
+  /**
+   * Isolated Demo Exit:
+   * - Does NOT instantiate a Supabase client or call auth.signOut()
+   * - Clears demo cookie server-side via /login/demo?action=exit and replaces history
+   */
+  const handleDemoExit = () => {
+    setExiting(true);
+    setExitError(null);
     if (typeof document !== "undefined") {
       document.cookie =
         "csc-demo-bypass=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
     }
+    window.location.replace("/login/demo?action=exit");
+  };
 
-    // 2. Terminate Supabase authenticated session if active
+  /**
+   * Authenticated Supabase Sign-Out:
+   * - Calls supabase.auth.signOut() and checks both returned { error } and thrown exceptions
+   * - Only redirects with ?logout=true if sign-out succeeds
+   */
+  const handleAuthenticatedSignOut = async () => {
+    setExiting(true);
+    setExitError(null);
+
     try {
       const supabase = createClient();
-      await supabase.auth.signOut();
-    } catch {
-      // Ignore network errors in offline/demo mode
-    }
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setExitError(error.message || "Sign out failed. Please try again.");
+        setExiting(false);
+        return;
+      }
 
-    // 3. Clean transition to login page with sign-out confirmation
-    router.push("/login?logout=true");
+      if (typeof document !== "undefined") {
+        document.cookie =
+          "csc-demo-bypass=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+      }
+
+      router.replace("/login?logout=true");
+      router.refresh();
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error ? err.message : "Network error during sign out.";
+      setExitError(msg);
+      setExiting(false);
+    }
+  };
+
+  const handleExitClick = () => {
+    if (isDemoMode) {
+      handleDemoExit();
+    } else {
+      void handleAuthenticatedSignOut();
+    }
   };
 
   const sidebarContent = (
@@ -139,6 +175,14 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
               </span>
             </div>
           </Link>
+          <button
+            type="button"
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+            aria-label="Close navigation drawer"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Navigation Sections */}
@@ -152,17 +196,19 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
               <div className="space-y-1">
                 {section.items.map((item) => {
                   const Icon = item.icon;
+                  const config = ROUTE_REGISTRY[item.key];
+                  const href = config.buildHref({ projectId, approvalToken });
                   const isActive =
-                    item.isImplemented &&
-                    (pathname === item.href ||
-                      (item.href === "/dashboard" &&
+                    config.isImplemented &&
+                    (pathname === href ||
+                      (item.key === "dashboard" &&
                         pathname?.startsWith("/dashboard")));
 
-                  if (item.isImplemented) {
+                  if (config.isImplemented) {
                     return (
                       <Link
                         key={item.name}
-                        href={item.href}
+                        href={href}
                         onClick={() => setMobileOpen(false)}
                         className={`group flex items-center justify-between rounded-lg px-2.5 py-2 text-xs transition-all ${
                           isActive
@@ -185,17 +231,16 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
                     );
                   }
 
-                  // Unimplemented teammate route — triggers modal, NEVER a 404
                   return (
                     <button
                       key={item.name}
                       type="button"
                       onClick={() => {
                         setMobileOpen(false);
-                        openPending(item.href);
+                        openPending(item.key);
                       }}
-                      className="group flex items-center justify-between w-full rounded-lg px-2.5 py-2 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left"
-                      title={`${item.name} — ${item.pendingOwner} (Pending Integration)`}
+                      className="group flex items-center justify-between w-full rounded-lg px-2.5 py-2 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                      title={`${item.name} — ${config.member} (Pending Integration)`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <Icon className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-slate-600" />
@@ -216,7 +261,6 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
 
       {/* ACCOUNT Section: Agency Profile + Single Context-Aware Exit Action */}
       <div className="pt-4 border-t border-slate-200 space-y-3">
-        {/* Agency Profile Card */}
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="flex items-center gap-2.5">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 shrink-0">
@@ -239,15 +283,34 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
           </div>
         </div>
 
-        {/* Single Context-Aware Account Exit Action */}
+        {exitError && (
+          <div
+            role="alert"
+            className="rounded-lg border border-rose-200 bg-rose-50 p-2 text-[11px] text-rose-800 flex items-start gap-1.5"
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-rose-600 shrink-0 mt-0.5" />
+            <span>{exitError}</span>
+          </div>
+        )}
+
         <button
           type="button"
-          onClick={handleSignOut}
-          className="flex items-center justify-center gap-1.5 w-full rounded-lg py-2 px-3 text-xs font-semibold text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-rose-200/80 transition-colors shadow-2xs"
-          title={inDemo ? "Exit isolated demo workspace" : "Sign out of account"}
+          onClick={handleExitClick}
+          disabled={exiting}
+          className="flex items-center justify-center gap-1.5 w-full rounded-lg py-2 px-3 text-xs font-semibold text-rose-700 hover:text-rose-800 hover:bg-rose-50 border border-rose-200/80 transition-colors shadow-2xs disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
+          title={isDemoMode ? "Exit isolated demo workspace" : "Sign out of account"}
         >
-          <LogOut className="h-4 w-4 text-rose-600" />
-          <span>{inDemo ? "Exit Demo" : "Sign Out"}</span>
+          {exiting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-rose-600" />
+              <span>{isDemoMode ? "Exiting Demo..." : "Signing Out..."}</span>
+            </>
+          ) : (
+            <>
+              <LogOut className="h-4 w-4 text-rose-600" />
+              <span>{isDemoMode ? "Exit Demo" : "Sign Out"}</span>
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -257,18 +320,19 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
     <>
       {/* Mobile top bar toggle button */}
       <div className="lg:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b border-slate-200 bg-white px-4">
-        <div className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
             <ShieldCheck className="h-4 w-4" />
           </div>
           <span className="font-sans text-sm font-bold text-slate-900">
             CSC Guardrail
           </span>
-        </div>
+        </Link>
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          aria-expanded={mobileOpen}
           aria-label="Toggle navigation drawer"
         >
           {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -296,7 +360,6 @@ export function DashboardSidebar({ isDemoMode = false }: DashboardSidebarProps) 
         {sidebarContent}
       </aside>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}

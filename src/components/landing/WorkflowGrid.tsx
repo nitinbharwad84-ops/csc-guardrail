@@ -17,108 +17,59 @@ import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY, type ScreenKey } from "@/components/dashboard/routeAvailability";
 
-interface ScreenCard {
-  number: string;
-  route: string;
-  title: string;
+interface ScreenCardMeta {
+  key: ScreenKey;
   badge: string;
   badgeColor: string;
   icon: React.ElementType;
-  description: string;
-  role: string;
-  isImplemented: boolean;
-  assignedMember?: string;
+  useDemoEntry?: boolean;
 }
 
-const SCREENS: ScreenCard[] = [
+const SCREEN_CARDS: ScreenCardMeta[] = [
   {
-    number: "Screen 01",
-    route: "/",
-    title: "Product Landing Page",
+    key: "landing",
     badge: "Public Entry",
     badgeColor: "bg-slate-100 text-slate-700 border-slate-200",
     icon: Home,
-    description:
-      "Public-facing portal explaining the Two-Layer Defense against fixed-fee agency scope creep with quick-launch navigation.",
-    role: "Agency & Prospective Clients",
-    isImplemented: true,
   },
   {
-    number: "Screen 02",
-    route: "/login",
-    title: "Agency Workspace Login",
+    key: "login",
     badge: "Auth & Demo",
     badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
     icon: LogIn,
-    description:
-      "Secure agency sign-in powered by Supabase Auth with Google OAuth, password reset, and an isolated 1-click evaluation demo.",
-    role: "Agency Account Leads",
-    isImplemented: true,
   },
   {
-    number: "Screen 03",
-    route: "/scanner",
-    title: "SOW Ambiguity Scanner",
+    key: "scanner",
     badge: "Layer 1 Defense",
     badgeColor: "bg-amber-50 text-amber-800 border-amber-200",
     icon: Search,
-    description:
-      "Pre-kickoff contract analyzer that flags vaguely phrased deliverables and generates precision specs before signatures.",
-    role: "Solution Architects & Delivery Leads",
-    isImplemented: false,
-    assignedMember: "Member 3 (Track 1)",
   },
   {
-    number: "Screen 04",
-    route: "/dashboard",
-    title: "Scope Health Dashboard",
+    key: "dashboard",
     badge: "Command Center",
     badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
     icon: LayoutDashboard,
-    description:
-      "Live fixed-contract benchmark tracking the ₹1,50,000 cap, 120 hr budget, swappable deliverables pool, and active drift alerts.",
-    role: "Project Managers & Tech Leads",
-    isImplemented: true,
+    useDemoEntry: true,
   },
   {
-    number: "Screen 05",
-    route: "/simulator",
-    title: "Drift & Swap Simulator",
+    key: "simulator",
     badge: "Layer 2 Defense",
     badgeColor: "bg-indigo-50 text-indigo-700 border-indigo-200",
     icon: Sliders,
-    description:
-      "Interactive scope engine matching incoming WhatsApp & Excel drift (+14 hrs) against swappable deliverables for a ₹0 net swap.",
-    role: "Account Directors & PMs",
-    isImplemented: false,
-    assignedMember: "Member 4 (Track 3)",
   },
   {
-    number: "Screen 06",
-    route: "/approve/demo-csc-892a",
-    title: "Client Approval Portal",
+    key: "approve",
     badge: "Client Facing",
     badgeColor: "bg-emerald-50 text-emerald-700 border-emerald-200",
     icon: CheckSquare,
-    description:
-      "Dedicated single-column contract sheet with zero agency sidebar clutter for 1-click client sign-off on scope adjustments.",
-    role: "VastraKart Client Stakeholders",
-    isImplemented: false,
-    assignedMember: "Member 4 (Track 4)",
   },
   {
-    number: "Screen 07",
-    route: "/ledger",
-    title: "Immutable Audit Ledger",
+    key: "ledger",
     badge: "Cryptographic Log",
     badgeColor: "bg-slate-100 text-slate-800 border-slate-200",
     icon: FileSpreadsheet,
-    description:
-      "Verifiable timeline recording every scope modification with hash #CSC-892A and automated client-ready PDF handoff exports.",
-    role: "Auditors & Executive Leadership",
-    isImplemented: false,
-    assignedMember: "Member 5 (Track 5)",
   },
 ];
 
@@ -127,9 +78,11 @@ export function WorkflowGrid() {
 
   return (
     <>
-      <section id="workflow" className="py-16 md:py-24 bg-slate-50 border-b border-slate-200">
+      <section
+        id="workflow"
+        className="scroll-mt-20 py-16 md:py-24 bg-slate-50 border-b border-slate-200"
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Section Header */}
           <div className="mx-auto max-w-3xl text-center">
             <span className="text-xs font-bold tracking-wider uppercase text-slate-600 bg-white border border-slate-200 px-3 py-1 rounded-full shadow-2xs">
               Seven-Screen System Architecture
@@ -143,31 +96,31 @@ export function WorkflowGrid() {
             </p>
           </div>
 
-          {/* 7-Screen Grid */}
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {SCREENS.map((screen) => {
-              const Icon = screen.icon;
+            {SCREEN_CARDS.map((card) => {
+              const config = ROUTE_REGISTRY[card.key];
+              const Icon = card.icon;
               return (
                 <div
-                  key={screen.number}
+                  key={config.screenNumber}
                   className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 shadow-2xs hover:border-indigo-300 hover:shadow-sm transition-all"
                 >
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold text-slate-400">
-                        {screen.number}
+                        {config.screenNumber}
                       </span>
                       <div className="flex items-center gap-1.5">
-                        {!screen.isImplemented && (
+                        {!config.isImplemented && (
                           <span className="inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 bg-amber-50 border border-amber-200">
                             <Clock className="h-2.5 w-2.5 text-amber-600" />
                             <span>Pending</span>
                           </span>
                         )}
                         <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${screen.badgeColor}`}
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${card.badgeColor}`}
                         >
-                          {screen.badge}
+                          {card.badge}
                         </span>
                       </div>
                     </div>
@@ -178,39 +131,50 @@ export function WorkflowGrid() {
                       </div>
                       <div>
                         <h3 className="text-base font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                          {screen.title}
+                          {config.title}
                         </h3>
                         <code className="text-xs font-mono text-slate-500">
-                          {screen.route}
+                          {config.routePattern}
                         </code>
                       </div>
                     </div>
 
                     <p className="mt-3.5 text-xs text-slate-600 leading-relaxed">
-                      {screen.description}
+                      {config.description}
                     </p>
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[170px]">
-                      {screen.assignedMember || screen.role}
+                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[175px]">
+                      {config.isImplemented ? config.role : config.member}
                     </span>
 
-                    {screen.isImplemented ? (
-                      <Link
-                        href={screen.route}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700 hover:underline"
-                        aria-label={`Open ${screen.title}`}
-                      >
-                        <span>Launch</span>
-                        <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                      </Link>
+                    {config.isImplemented ? (
+                      card.useDemoEntry ? (
+                        <a
+                          href="/login/demo"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700 hover:underline"
+                          aria-label={`Open ${config.title}`}
+                        >
+                          <span>Launch</span>
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </a>
+                      ) : (
+                        <Link
+                          href={config.buildHref()}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 group-hover:text-indigo-700 hover:underline"
+                          aria-label={`Open ${config.title}`}
+                        >
+                          <span>Launch</span>
+                          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      )
                     ) : (
                       <button
                         type="button"
-                        onClick={() => openPending(screen.route)}
+                        onClick={() => openPending(card.key)}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline"
-                        title={`${screen.title} — ${screen.assignedMember}`}
+                        title={`${config.title} — ${config.member}`}
                       >
                         <span>Pending Integration</span>
                         <Clock className="h-3 w-3 text-amber-600" />
@@ -224,7 +188,6 @@ export function WorkflowGrid() {
         </div>
       </section>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}

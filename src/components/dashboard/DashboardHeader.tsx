@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import {
   Building2,
   Calendar,
@@ -14,17 +15,22 @@ import {
   PendingIntegrationModal,
   usePendingIntegration,
 } from "@/components/dashboard/PendingIntegrationModal";
+import { ROUTE_REGISTRY } from "@/components/dashboard/routeAvailability";
 
 interface DashboardHeaderProps {
   project: Project;
   isDemoMode?: boolean;
+  approvalToken?: string;
 }
 
 export function DashboardHeader({
   project,
   isDemoMode = false,
+  approvalToken = "demo-csc-892a",
 }: DashboardHeaderProps) {
   const { activeRoute, openPending, closePending } = usePendingIntegration();
+  const simulatorConfig = ROUTE_REGISTRY.simulator;
+  const approveConfig = ROUTE_REGISTRY.approve;
 
   return (
     <>
@@ -72,43 +78,62 @@ export function DashboardHeader({
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3 text-slate-400" />
                 <span>Fixed Ceiling: </span>
-                <strong className="font-mono text-slate-800">
+                <strong className="font-mono text-slate-800 tabular-nums">
                   ₹{project.budget_cap_inr.toLocaleString("en-IN")}
                 </strong>
-                <span> / {project.total_hours} hrs</span>
-                <span className="font-mono text-slate-500">
+                <span className="tabular-nums"> / {project.total_hours} hrs</span>
+                <span className="font-mono text-slate-500 tabular-nums">
                   (₹{HOURLY_RATE_INR.toLocaleString("en-IN")}/hr)
                 </span>
               </span>
             </p>
           </div>
 
-          {/* Quick Actions & Status Strip (Zero 404 links, No duplicate exit button) */}
+          {/* Quick Actions (Route-Registry Aware, No Duplicate Exit) */}
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => openPending("/simulator")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
-              title="Track 3 Simulator — In Development by Member 4"
-            >
-              <GitBranch className="h-3.5 w-3.5 text-indigo-600" />
-              <span>Track Status</span>
-            </button>
+            {simulatorConfig.isImplemented ? (
+              <Link
+                href={simulatorConfig.buildHref({ projectId: project.id })}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
+              >
+                <GitBranch className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Open Simulator</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openPending("simulator")}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
+                title="Track 4 Simulator — In Development by Member 4"
+              >
+                <GitBranch className="h-3.5 w-3.5 text-indigo-600" />
+                <span>Track Status</span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={() => openPending("/approve")}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
-              title="Track 4 Client Portal — In Development by Member 4"
-            >
-              <Info className="h-3.5 w-3.5 text-emerald-600" />
-              <span>Portal Info</span>
-            </button>
+            {approveConfig.isImplemented ? (
+              <Link
+                href={approveConfig.buildHref({ approvalToken })}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
+              >
+                <Info className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Client Portal</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => openPending("approve")}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-100 transition-colors"
+                title="Track 3 Client Portal — In Development by Member 3"
+              >
+                <Info className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Portal Info</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Pending Route Integration Modal */}
       <PendingIntegrationModal
         routeInfo={activeRoute}
         onClose={closePending}
